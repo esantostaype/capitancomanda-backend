@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  name String
+  slug String
+  icon String?
+  products Product[]
+}
+
+model Product {
+  id Int @id @default(autoincrement())
+  name String
+  description String? @db.Text
+  price Float
+  image String?
+  spicyLevel Boolean?
+  spicyLevelNumber Int?
+  categoryId Int
+  category Category @relation( fields: [ categoryId ], references: [ id ] )
+  orderItems OrderProducts[]
+}
+
+model Order {
+  id Int @id @default(autoincrement())
+  total Float
+  table String
+  delivery Boolean @default( false )
+  status String @default( "received" )
+  date DateTime @default( now() )
+  orderReadyAt DateTime?
+  orderProducts OrderProducts[]
+}
+
+model OrderProducts {
+  id Int @id @default(autoincrement())
+  orderId Int
+  order Order @relation( fields: [ orderId ], references: [ id ] )
+  productId Int
+  product Product @relation( fields: [ productId ], references: [ id ] )
+  quantity Int
+  spicyLevelNumber Int?
+}

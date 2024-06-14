@@ -3,48 +3,120 @@ generator client {
 }
 
 datasource db {
-  provider = "postgres"
-  url      = env("DATABASE_URL")
+  provider = "mysql"
+  url = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPERADMIN
+  OWNER
+  ADMIN
+  MANAGER
+  CHEF
+  CASHIER
+  WAITER
+  CLIENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  VERIFIED
+  NOT_VERIFIED
+}
+
+enum OrderStatus {
+  RECEIVED
+  IN_PREPARATION
+  READY
+  DONE
+  CANCELED
+}
+
+model Restaurant {
+  id String @id @default(uuid())
+  name String
+  address String?
+  phoneNumber String?
+  owners User[] @relation("RestaurantOwners")
+  branches Branch[]
+}
+
+model Branch {
+  id String @id @default(uuid())
+  name String
+  address String?
+  phoneNumber String?
+  restaurantId String
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  users User[]
+  categories Category[]
+  products Product[]
+  orders Order[]
+}
+
+model User {
+  id String @id @default(uuid())
+  fullName String?
+  email String? @unique
+  password String?
+  role Role
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  status UserStatus
+  verificationToken String?
+  oauth Boolean @default(false)
+  branchId String?
+  branch Branch? @relation(fields: [branchId ], references: [id])
+  ownedRestaurantId String?
+  ownedRestaurant Restaurant? @relation("RestaurantOwners", fields: [ownedRestaurantId], references: [id])
+  resetPasswordToken  String?
+  resetPasswordExpires DateTime?
 }
 
 model Category {
-  id Int @id @default(autoincrement())
+  id String @id @default(uuid())
   name String
-  slug String
-  icon String?
+  image String?
+  branchId String
+  branch Branch @relation(fields: [branchId], references: [id])
   products Product[]
 }
 
 model Product {
-  id Int @id @default(autoincrement())
+  id String @id @default(uuid())
   name String
-  description String? @db.Text
+  description String?
   price Float
   image String?
-  spicyLevel Boolean?
-  spicyLevelNumber Int?
-  categoryId Int
-  category Category @relation( fields: [ categoryId ], references: [ id ] )
-  orderItems OrderProducts[]
+  categoryId String
+  branchId String
+  variants Json?
+  ingredients Json?
+  orderItems OrderProduct[]
+  branch Branch @relation(fields: [branchId], references: [id])
+  category Category?  @relation(fields: [categoryId], references: [id])
 }
 
 model Order {
-  id Int @id @default(autoincrement())
+  id String @id @default(uuid())
   total Float
   table String
-  delivery Boolean @default( false )
-  status String @default( "received" )
-  date DateTime @default( now() )
+  delivery Boolean @default(false)
+  status OrderStatus
+  date DateTime @default(now())
   orderReadyAt DateTime?
-  orderProducts OrderProducts[]
+  orderProducts OrderProduct[]
+  branchId String
+  branch Branch @relation(fields: [branchId], references: [id])
 }
 
-model OrderProducts {
-  id Int @id @default(autoincrement())
-  orderId Int
-  order Order @relation( fields: [ orderId ], references: [ id ] )
-  productId Int
-  product Product @relation( fields: [ productId ], references: [ id ] )
+model OrderProduct {
+  id String @id @default(uuid())
+  orderId String
+  order Order @relation(fields: [orderId], references: [id])
+  productId String
+  product Product @relation(fields: [productId], references: [id])
   quantity Int
   spicyLevelNumber Int?
 }

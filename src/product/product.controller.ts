@@ -1,56 +1,46 @@
-import { Controller, Get, Post, Param, Delete, Body, Put, Query } from '@nestjs/common';
+import { Controller, Get, Post, Param, Delete, Body, Put, UseGuards, Query } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Product } from '@prisma/client';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { BranchId, OwnedRestaurantId } from 'src/auth/decorators/user.decorator';
 
 @Controller('products')
+@UseGuards(AuthGuard)
 export class ProductController {
+  constructor(private readonly productService: ProductService) {}
 
-  constructor( private readonly productService: ProductService ) {}
-  
   @Get()
   async findAll(
-    @Query('category') category: string,
-    @Query('searchTerm') searchTerm: string,
-    @Query('searchTermAll') searchTermAll: string,
-    @Query('page') page: string,
-    @Query('take') take: string,
-    @Query('min') minPrice: string,
-    @Query('max') maxPrice: string,
+    @OwnedRestaurantId() ownedRestaurantId: string,
+    @BranchId() branchId: string,
+    @Query('category') category: string
   ) {
-    if ( category || searchTerm || page || take || minPrice || maxPrice ) {
-      return this.productService.findByFilters(
-        +page,
-        +take,
-        category,
-        searchTerm,
-        +minPrice,
-        +maxPrice,
-      );
+    if ( category ) {
+      return this.productService.findByCategory( category, ownedRestaurantId, branchId );
     }
-    if ( searchTermAll ) {
-      return this.productService.findAllByFilters( searchTermAll );
-    } else {
-      return this.productService.findAll();
-    }
+    return this.productService.findAll( ownedRestaurantId, branchId );
   }
 
   @Get(':id')
-  async findOne( @Param('id') id: number ) {
-    return this.productService.findOne(+id);
+  async findOne(
+    @Param('id') id: string,
+    @BranchId() branchId: string
+  ) {
+    return this.productService.findOne( branchId, id );
   }
 
   @Post()
-  async create( @Body() data: Product ) {
-    return this.productService.create( data );
+  async create( @Body() data: Product, @BranchId() branchId: string ) {
+    return this.productService.create( branchId, data );
   }
 
   @Put(':id')
-  async update( @Param('id') id: number, @Body() data: Product ) {
-    return this.productService.update( +id, data );
+  async update( @Param('id') id: string, @Body() data: Product, @BranchId() branchId: string ) {
+    return this.productService.update( branchId, id, data );
   }
 
   @Delete(':id')
-  async remove( @Param('id') id: number ) {
-    return this.productService.remove( +id );
+  async remove( @Param('id') id: string, @BranchId() branchId: string ) {
+    return this.productService.remove( branchId, id );
   }
 }

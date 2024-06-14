@@ -1,31 +1,34 @@
-import { Controller, Get, Post, Param, Delete, Body, Put } from '@nestjs/common';
-import { Order } from '@prisma/client';
+import { Controller, Get, Param, Delete, Body, Put, UseGuards, Post } from '@nestjs/common';
+import { Order, OrderStatus } from '@prisma/client';
 import { OrderService } from './order.service'
+import { AuthGuard } from 'src/auth/auth.guard';
+import { BranchId } from 'src/auth/decorators/user.decorator';
 
 @Controller('orders')
+@UseGuards( AuthGuard )
 export class OrderController {
 
   constructor( private readonly orderService: OrderService ) {}
 
   @Get()
-  async findAll() {
-    return this.orderService.findAll();
+  async findAll( @BranchId() branchId: string ) {
+    return this.orderService.findAll( branchId );
   }
 
   @Get(':status')
-  async findByStatus( @Param('status') status: string) {
-    return this.orderService.findByStatus( status );
+  async findByStatus( @BranchId() branchId: string, @Param('status') status: OrderStatus) {
+    return this.orderService.findByStatus( branchId, status );
   }
 
   @Get(':id')
-  async findOne( @Param('id') id: string ) {
-    return this.orderService.findOne(+id);
+  async findOne( @BranchId() branchId: string, @Param('id') id: string ) {
+    return this.orderService.findOne( branchId, id);
   }
 
   @Post()
-  async create( @Body() data ): Promise<any> {
+  async create( @BranchId() branchId: string, @Body() data ): Promise<any> {
     try {
-      const create = await this.orderService.create( data );
+      const create = await this.orderService.create( branchId, data );
       return { message: 'Pedido creado exitosamente', order: create };
     } catch (error) {
       return { error: 'Error al crear el pedido' };
@@ -33,12 +36,12 @@ export class OrderController {
   }
 
   @Put(':id')
-  async update( @Param('id') id: string, @Body() data: Order ) {
-    return this.orderService.update( +id, data );
+  async update( @BranchId() branchId: string, @Param('id') id: string, @Body() data: Order ) {
+    return this.orderService.update( branchId, id, data );
   }
 
   @Delete(':id')
-  async remove( @Param('id') id: string ) {
-    return this.orderService.remove( +id );
+  async remove( @BranchId() branchId: string, @Param('id') id: string ) {
+    return this.orderService.remove( branchId, id );
   }
 }

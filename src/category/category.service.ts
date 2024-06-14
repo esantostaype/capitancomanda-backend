@@ -7,36 +7,50 @@ export class CategoryService {
 
   constructor( private prisma: PrismaService ) {}
 
-  async findAll(): Promise<Category[]> {
-    return this.prisma.category.findMany()
+  async findAll( branchId: string ): Promise<Category[]> {
+    return this.prisma.category.findMany({
+      where: {
+        branchId
+      },
+      include: {
+        products: true,
+        branch: true
+      }
+    })
   }
 
-  async findOne( id: number ): Promise<Category> {
+  async findOne( branchId: string, id: string ): Promise<Category> {
     return this.prisma.category.findUnique({
       where: {
+        branchId,
         id
       }
     })
   }
 
-  async create( data: Category ): Promise<Category> {
+  async create( branchId: string, data: Category ): Promise<Category> {
     return this.prisma.category.create({
-      data
+      data: {
+        ...data,
+        branchId
+      }
     })
   }
 
-  async update( id: number, data: Category ): Promise<Category> {
+  async update( branchId: string, id: string, data: Category ): Promise<Category> {
     return this.prisma.category.update({
       where: {
+        branchId,
         id
       },
       data
     })
   }
 
-  async remove( id: number ): Promise<Category> {
+  async remove( branchId: string, id: string ): Promise<Category> {
     return this.prisma.category.delete({
       where: {
+        branchId,
         id
       }
     })

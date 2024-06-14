@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Order } from '@prisma/client';
+import { Order, OrderStatus } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OrderSchema } from 'src/schema';
@@ -9,29 +9,38 @@ export class OrderService {
 
   constructor( private prisma: PrismaService ) {}
 
-  async findAll(): Promise<Order[]> {
+  async findAll( branchId: string ): Promise<Order[]> {
     return this.prisma.order.findMany({
+      where: {
+        branchId
+      },
       include: {
         orderProducts: {
           include: {
             product: true
           }
-        }
+        },
+        branch: true
+      },
+      orderBy: {
+        date: 'asc'
       }
     })
   }
 
-  async findOne( id: number ): Promise<Order> {
+  async findOne( branchId: string, id: string ): Promise<Order> {
     return this.prisma.order.findUnique({
       where: {
+        branchId,
         id
       }
     })
   }
 
-  async findByStatus( status: string ): Promise<Order[]> {
+  async findByStatus( branchId: string, status: OrderStatus ): Promise<Order[]> {
     return this.prisma.order.findMany({
       where: {
+        branchId,
         status
       },
       include: {
@@ -39,13 +48,18 @@ export class OrderService {
           include: {
             product: true
           }
-        }
+        },
+        branch: true
+      },
+      orderBy: {
+        date: 'asc'
       }
     })
   }
 
-  async create( data ): Promise<any> {
+  async create( branchId: string, data: any ): Promise<any> {
     const result = OrderSchema.safeParse( data )
+    console.log( result )
     if (!result.success) {
       return {
         success: false,
@@ -55,14 +69,15 @@ export class OrderService {
     try {
       await this.prisma.order.create({
         data: {
+          branchId: branchId,
           table: result.data.table,
           delivery: result.data.delivery,
           total: result.data.total,
+          status: OrderStatus.RECEIVED,
           orderProducts: {
             create: result.data.order.map( product => ({
               productId: product.id,
-              quantity: product.quantity,
-              spicyLevelNumber: product.spicyLevelNumber
+              quantity: product.quantity
             }))
           }
         }
@@ -78,11 +93,12 @@ export class OrderService {
     }
   }
 
-  async update( id: number, data ): Promise<any> {
-    if( data.status == "ready" ){
+  async update( branchId: string, id: string, data: Order ): Promise<any> {
+    if( data.status === OrderStatus.READY ){
       return this.prisma.order.update({
         where: {
-          id: +id
+          branchId,
+          id: id
         },
         data: {
           status: data.status,
@@ -92,7 +108,7 @@ export class OrderService {
     }
     return this.prisma.order.update({
       where: {
-        id: +id
+        id: id
       },
       data: {
         status: data.status
@@ -100,9 +116,15 @@ export class OrderService {
     })
   }
 
-  async remove( id: number ): Promise<Order> {
+  async remove( branchId: string, id: string ): Promise<Order> {
+    await this.prisma.orderProduct.deleteMany({
+      where: {
+        orderId: id
+      }
+    })
     return this.prisma.order.delete({
       where: {
+        branchId,
         id
       }
     })

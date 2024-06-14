@@ -12,11 +12,10 @@ export const OrderSchema = z.object({
   total: z.number().min( 1, 'Hay errores en la Orden' ),
   delivery: z.boolean(),
   order: z.array( z.object({
-    id: z.number(),
+    id: z.string(),
     name: z.string(),
     price: z.number(),
     quantity: z.number(),
-    subtotal: z.number(),
-    spicyLevelNumber: z.number().min( 0 )
+    subtotal: z.number()
   }) )
 })

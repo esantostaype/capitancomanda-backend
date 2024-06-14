@@ -4,129 +4,118 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ProductService {
+  constructor(private prisma: PrismaService) {}
 
-  constructor( private prisma: PrismaService ) {}
-
-  async findAll(): Promise<Product[]> {
-    return this.prisma.product.findMany({
-      include: {
-        category: true
-      },
-      orderBy: {
-        id: 'asc'
-      }
-    })
-  }
-
-  async findAllByFilters( searchTermAll: string ): Promise<Product[]> {
-    return this.prisma.product.findMany({
-      where: {
-        name: {
-          contains: searchTermAll
+  async findAll( ownedRestaurantId?: string, branchId?: string  ): Promise<Product[]> {
+    if ( ownedRestaurantId ) {
+      return await this.prisma.product.findMany({
+        where: {
+          branch: {
+            restaurantId: ownedRestaurantId
+          }
+        },
+        include: {
+          category: true,
+          branch: true
+        },
+        orderBy: {
+          id: 'asc'
         }
-      }
-    })
-  }
-
-  async findByFilters(
-    page?: number,
-    take?: number,
-    category?: string,
-    searchTerm?: string,
-    minPrice?: number,
-    maxPrice?: number  ): Promise< Product[] >{
-    const pageFound =  page ? page : 1
-    const takeFound = take ? take : 10
-    const categoryFound = category ? category : ''
-    const skip = ( pageFound - 1 ) * takeFound
-    const minFound =  minPrice ? minPrice : 1
-    const maxFound = maxPrice ? maxPrice : 99999999999
-    const searchTermFound = searchTerm ? searchTerm : ''
-    const whereCondition: any = {
-      price: {
-        gte: minFound,
-        lte: maxFound,
-      },
-      name: {
-        contains: searchTermFound,
-      },
-    };
-  
-    if (categoryFound) {
-      whereCondition.category = {
-        slug: categoryFound,
-      };
+      })
+    } else if ( branchId ) {
+      return await this.prisma.product.findMany({
+        where: {
+          branchId
+        },
+        include: {
+          category: true,
+          branch: true
+        },
+        orderBy: {
+          id: 'asc'
+        }
+      })
     }
-  
-    return this.prisma.product.findMany({
-      take: takeFound,
-      skip: skip,
-      where: whereCondition,
-      include: {
-        category: true
-      }
-    });
-  }
-  
-  async findByCategory( category: string, page?: number, take?: number ): Promise<Product[]> {
-    const skip = ( page - 1 ) * take 
-    return this.prisma.product.findMany({
-      take,
-      skip,
-      include: {
-        category: true
-      },
-      where: {
-        category: {
-          slug: category
-        }
-      }
-    })
-  }
-  
-  async findBySearch( searchTerm: string ): Promise<Product[]> {
-    return this.prisma.product.findMany({
-      include: {
-        category: true
-      },
-      where: {
-        name: {
-          contains: searchTerm
-        }
-      }
-    })
   }
 
-  async findAllCategories(){
-    return this.prisma.category.findMany()
+  async findByCategory( category: string, ownedRestaurantId?: string, branchId?: string ): Promise<Product[]> {
+    if ( ownedRestaurantId ) {
+      return await this.prisma.product.findMany({
+        where: {
+          branch: {
+            restaurantId: ownedRestaurantId
+          },
+          category: {
+            id: category,
+          },
+        },
+        include: {
+          category: true,
+          branch: true
+        },
+        orderBy: {
+          id: 'asc'
+        }
+      })
+    } else if ( branchId ) {
+      return await this.prisma.product.findMany({
+        where: {
+          branchId,
+          category: {
+            id: category,
+          },
+        },
+        include: {
+          category: true,
+          branch: true
+        },
+        orderBy: {
+          id: 'asc'
+        }
+      })
+    }
   }
 
-  async findOne( id: number ): Promise<Product> {
-    return this.prisma.product.findUnique({
+  async findOne( branchId: string, id: string ): Promise<Product> {
+    return await this.prisma.product.findUnique({
       where: {
+        branchId,
         id
       }
     })
   }
 
-  async create( data: Product ): Promise<Product> {
-    return this.prisma.product.create({
-      data
+  async create( branchId: string, data: Product ): Promise<Product> {
+    return await this.prisma.product.create({
+      data: {
+        ...data,
+        branchId
+      }
     })
   }
 
-  async update( id: number, data: Product ): Promise<Product> {
-    return this.prisma.product.update({
+  async update( branchId: string, id: string, data: Product ): Promise<Product> {
+    return await this.prisma.product.update({
       where: {
+        branchId,
         id
       },
-      data  
+      data: {
+        ...data,
+        branchId
+      }
     })
   }
 
-  async remove( id: number ): Promise<Product> {
-    return this.prisma.product.delete({
+  async remove( branchId: string, id: string ): Promise<Product> {
+    await this.prisma.orderProduct.deleteMany({
       where: {
+        productId: id
+      }
+    })
+    return await this.prisma.product.delete({
+      where: {
+        branchId,
         id
       }
     })

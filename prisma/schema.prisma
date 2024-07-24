@@ -40,6 +40,7 @@ model Restaurant {
   phoneNumber String?
   owners User[] @relation("RestaurantOwners")
   branches Branch[]
+  createdAt DateTime? @default(now())
 }
 
 model Branch {
@@ -50,9 +51,7 @@ model Branch {
   restaurantId String
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   users User[]
-  categories Category[]
-  products Product[]
-  orders Order[]
+  createdAt DateTime? @default(now())
 }
 
 model User {
@@ -61,26 +60,30 @@ model User {
   email String? @unique
   password String?
   role Role
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
   status UserStatus
   verificationToken String?
   oauth Boolean @default(false)
   branchId String?
-  branch Branch? @relation(fields: [branchId ], references: [id])
+  branch Branch? @relation(fields: [branchId], references: [id])
   ownedRestaurantId String?
   ownedRestaurant Restaurant? @relation("RestaurantOwners", fields: [ownedRestaurantId], references: [id])
   resetPasswordToken  String?
   resetPasswordExpires DateTime?
+  categories Category[]
+  products Product[]
+  orders Order[]
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
 }
 
 model Category {
   id String @id @default(uuid())
   name String
   image String?
-  branchId String
-  branch Branch @relation(fields: [branchId], references: [id])
   products Product[]
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  createdAt DateTime? @default(now())
 }
 
 model Product {
@@ -89,13 +92,14 @@ model Product {
   description String?
   price Float
   image String?
-  categoryId String
-  branchId String
   variants Json?
   ingredients Json?
   orderItems OrderProduct[]
-  branch Branch @relation(fields: [branchId], references: [id])
+  categoryId String
   category Category?  @relation(fields: [categoryId], references: [id])
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  createdAt DateTime? @default(now())
 }
 
 model Order {
@@ -107,8 +111,9 @@ model Order {
   date DateTime @default(now())
   orderReadyAt DateTime?
   orderProducts OrderProduct[]
-  branchId String
-  branch Branch @relation(fields: [branchId], references: [id])
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  createdAt DateTime? @default(now())
 }
 
 model OrderProduct {

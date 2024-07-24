@@ -1,95 +1,243 @@
-import { Injectable } from '@nestjs/common';
-import { Product } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { Injectable } from '@nestjs/common'
+import { Product, Role } from '@prisma/client'
+import { PrismaService } from 'src/prisma/prisma.service'
 
 @Injectable()
 export class ProductService {
-  constructor(private prisma: PrismaService) {}
+  constructor( private prisma: PrismaService ) {}
 
-  async findAll( ownedRestaurantId?: string, branchId?: string  ): Promise<Product[]> {
-    if ( ownedRestaurantId ) {
+  async findAll( userRole: string, branchId: string, ownedRestaurantId: string ): Promise<Product[]> {
+    if ( userRole === Role.OWNER ) {
       return await this.prisma.product.findMany({
         where: {
-          branch: {
-            restaurantId: ownedRestaurantId
+          user: {
+            branch: {
+              restaurantId: ownedRestaurantId
+            }
           }
         },
         include: {
-          category: true,
-          branch: true
+          category: {
+            select: {
+              name: true
+            }
+          },
+          user: {
+            select: {
+              fullName: true,
+              branch: {
+                select: {
+                  name: true,
+                }
+              },
+              branchId: true
+            }
+          }
         },
         orderBy: {
-          id: 'asc'
-        }
+          createdAt: 'desc'
+        },
       })
-    } else if ( branchId ) {
+    } else {
       return await this.prisma.product.findMany({
         where: {
-          branchId
+          user: {
+            branchId: branchId
+          }
         },
         include: {
-          category: true,
-          branch: true
+          category: {
+            select: {
+              name: true
+            }
+          },
+          user: {
+            select: {
+              fullName: true,
+              branch: {
+                select: {
+                  name: true
+                }
+              },
+              branchId: true
+            }
+          }
         },
         orderBy: {
-          id: 'asc'
+          createdAt: 'desc'
+        },
+      })
+    }
+  }
+
+  async findByCategory( userRole: string, category: string, branchId: string, ownedRestaurantId: string ) {
+    if ( userRole === Role.OWNER ) {
+      return this.prisma.product.findMany({
+        where: {
+          category: {
+            id: category
+          },
+          user: {
+            branch: {
+              restaurantId: ownedRestaurantId
+            }
+          }
+        },
+        include: {
+          category: {
+            select: {
+              name: true
+            }
+          },
+          user: {
+            select: {
+              fullName: true,
+              branch: {
+                select: {
+                  name: true
+                }
+              },
+              branchId: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+      })
+    } else {
+      return this.prisma.product.findMany({
+        where: {
+          category: {
+            id: category
+          },
+          user: {
+            branchId: branchId
+          }
+        },
+        include: {
+          category: {
+            select: {
+              name: true
+            }
+          },
+          user: {
+            select: {
+              fullName: true,
+              branch: {
+                select: {
+                  name: true
+                }
+              },
+              branchId: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
       })
     }
   }
 
-  async findByCategory( category: string, ownedRestaurantId?: string, branchId?: string ): Promise<Product[]> {
-    if ( ownedRestaurantId ) {
-      return await this.prisma.product.findMany({
+  async findByBranch( userRole: string, branch: string ) {
+    if ( userRole === Role.OWNER ) {
+      return this.prisma.product.findMany({
         where: {
-          branch: {
-            restaurantId: ownedRestaurantId
-          },
-          category: {
-            id: category,
-          },
+          user: {
+            branchId: branch
+          }
         },
         include: {
-          category: true,
-          branch: true
+          category: {
+            select: {
+              name: true
+            }
+          },
+          user: {
+            select: {  
+              fullName: true,
+              branch: {
+                select: {
+                  name: true
+                }
+              },
+              branchId: true
+            }
+          }
         },
         orderBy: {
-          id: 'asc'
+          createdAt: 'desc'
+        },
+      })
+    }
+  }
+
+  async findOne( userRole: string, branchId: string, ownedRestaurantId: string, id: string ): Promise<Product> {
+    if ( userRole === Role.OWNER ) {
+      return await this.prisma.product.findFirst({
+        where: {
+          id,
+          user: {
+            branch: {
+              restaurantId: ownedRestaurantId
+            }
+          }
+        },
+        include: {
+          category: {
+            select: {
+              name: true
+            }
+          },
+          user: {
+            select: {
+              fullName: true,
+              branch: {
+                select: {
+                  name: true
+                }
+              },
+              branchId: true
+            }
+          }
         }
       })
-    } else if ( branchId ) {
-      return await this.prisma.product.findMany({
+    } else {
+      return await this.prisma.product.findFirst({
         where: {
-          branchId,
-          category: {
-            id: category,
-          },
+          id,
+          user: {
+            branchId: branchId,
+          }
         },
         include: {
-          category: true,
-          branch: true
-        },
-        orderBy: {
-          id: 'asc'
+          category: {
+            select: {
+              name: true
+            }
+          },
+          user: {
+            select: {
+              fullName: true,
+              branch: {
+                select: {
+                  name: true
+                }
+              },
+              branchId: true
+            }
+          }
         }
       })
     }
   }
 
-  async findOne( branchId: string, id: string ): Promise<Product> {
-    return await this.prisma.product.findUnique({
-      where: {
-        branchId,
-        id
-      }
-    })
-  }
-
-  async create( branchId: string, data: Product ): Promise<Product> {
+  async create( userId: string, data: Product ): Promise<Product> {
     return await this.prisma.product.create({
       data: {
         ...data,
-        branchId
+        userId
       }
     })
   }
@@ -97,13 +245,12 @@ export class ProductService {
   async update( branchId: string, id: string, data: Product ): Promise<Product> {
     return await this.prisma.product.update({
       where: {
-        branchId,
-        id
+        id,
+        user: {
+          branchId
+        }
       },
-      data: {
-        ...data,
-        branchId
-      }
+      data
     })
   }
 
@@ -115,8 +262,10 @@ export class ProductService {
     })
     return await this.prisma.product.delete({
       where: {
-        branchId,
-        id
+        id,
+        user: {
+          branchId
+        }
       }
     })
   }

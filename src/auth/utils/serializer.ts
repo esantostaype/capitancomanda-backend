@@ -19,7 +19,7 @@ export class SessionSerializer extends PassportSerializer {
 
   deserializeUser( payload: any, done: Function ) {
     console.log("Deserializer User")
-    const user = this.userService.findOne( payload.branchId, payload.id )
+    const user = this.userService.findOne( payload.id )
     return user ? done( null, user ) : done( null, null )
   }
 }

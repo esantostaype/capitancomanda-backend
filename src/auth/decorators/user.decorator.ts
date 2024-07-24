@@ -1,29 +1,29 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common'
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-export const UserId = createParamDecorator(
+export const UserRole = createParamDecorator(
   ( data: unknown, ctx: ExecutionContext ) => {
-    const request = ctx.switchToHttp().getRequest()
-    return request.user.userId
-  }
-)
+    const request = ctx.switchToHttp().getRequest();
+    return request.user.role;
+  },
+);
 
 export const BranchId = createParamDecorator(
   ( data: unknown, ctx: ExecutionContext ) => {
-    const request = ctx.switchToHttp().getRequest()
-    return request.user.branchId
-  }
-)
+    const request = ctx.switchToHttp().getRequest();
+    return request.user.branchId;
+  },
+);
 
-export const IsOwner = createParamDecorator(
+export const UserId = createParamDecorator(
   ( data: unknown, ctx: ExecutionContext ) => {
-    const request = ctx.switchToHttp().getRequest()
-    return request.user.isOwner
-  }
-)
+    const request = ctx.switchToHttp().getRequest();
+    return request.user.userId;
+  },
+);
 
 export const OwnedRestaurantId = createParamDecorator(
   ( data: unknown, ctx: ExecutionContext ) => {
-    const request = ctx.switchToHttp().getRequest()
-    return request.user?.ownedRestaurantId
+    const request = ctx.switchToHttp().getRequest();
+    return request.user.ownedRestaurantId;
   }
-)
+);

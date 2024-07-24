@@ -1,37 +1,60 @@
 import { Controller, Get, Post, Param, Delete, Body, Put, UseGuards } from '@nestjs/common';
 import { CategoryService } from './category.service';
-import { Category } from '@prisma/client';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { BranchId } from 'src/auth/decorators/user.decorator';
+import { Category, Role } from '@prisma/client';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { UserContext } from 'src/auth/decorators/user-context.decorator';
+import { AuthGuard } from 'src/auth/guard/auth.guard';
+import { RoleGuard } from 'src/auth/guard/role.guard';
 
 @Controller('categories')
-@UseGuards(AuthGuard)
+@Roles( Role.OWNER, Role.ADMIN )
+@UseGuards( AuthGuard, RoleGuard )
 export class CategoryController {
 
   constructor( private readonly categoryService: CategoryService ) {}
 
   @Get()
-  async findAll( @BranchId() branchId: string ) {    
-    return this.categoryService.findAll( branchId );
+  async findAll(
+    @UserContext() userContext: { userRole: string, branchId: string, ownedRestaurantId: string }
+  ) {
+    const { userRole, branchId, ownedRestaurantId } = userContext;
+    return this.categoryService.findAll( userRole, branchId, ownedRestaurantId );
   }
 
   @Get(':id')
-  async findOne( @BranchId() branchId: string, @Param('id') id: string ) {
-    return this.categoryService.findOne( branchId, id);
+  async findOne(
+    @Param('id') id: string,
+    @UserContext() userContext: { userRole: string, branchId: string, ownedRestaurantId: string }
+  ) {
+    const { userRole, branchId, ownedRestaurantId } = userContext
+    return this.categoryService.findOne( userRole, branchId, ownedRestaurantId, id );
   }
 
   @Post()
-  async create( @BranchId() branchId: string, @Body() data: Category ) {
-    return this.categoryService.create( branchId, data );
+  async create( 
+    @Body() data: Category,
+    @UserContext() userContext: { userId: string }
+  ) {
+    const { userId } = userContext
+    return this.categoryService.create( userId, data );
   }
 
   @Put(':id')
-  async update( @BranchId() branchId: string, @Param('id') id: string, @Body() data: Category ) {
+  async update(
+    @Param('id') id: string,
+    @Body() data: Category,
+    @UserContext() userContext: { branchId: string }
+  ) {
+    const { branchId } = userContext
     return this.categoryService.update( branchId, id, data );
   }
 
   @Delete(':id')
-  async remove( @BranchId() branchId: string, @Param('id') id: string ) {
+  async remove(
+    @Param('id') id: string,
+    @UserContext() userContext: { branchId: string }
+  ) {
+    const { branchId } = userContext
     return this.categoryService.remove( branchId, id );
   }
 }

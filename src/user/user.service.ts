@@ -15,11 +15,8 @@ export class UserService {
     private prisma: PrismaService
   ) {}
 
-  findAll( branchId: string ) {
+  findAll() {
     return this.prisma.user.findMany({
-      where: {
-        branchId
-      },
       orderBy: {
         id: 'asc'
       },
@@ -37,23 +34,21 @@ export class UserService {
     })
   }
 
-  findOne( branchId: string, id: string ) {
+  findOne( id: string ) {
     return this.prisma.user.findUnique({
       where: {
-        branchId,
         id
       }
     })
   }
 
-  async create( branchId: string, data: User ) {
+  async create( data: User ) {
     const newUser = await this.prisma.user.create({
       data: {
         ...data,
         password: await bcryptjs.hash( data.password, 6 ),
         verificationToken: uuidv4(),
-        status: UserStatus.NOT_VERIFIED,
-        branchId
+        status: UserStatus.NOT_VERIFIED
       }
     })
 
@@ -61,20 +56,18 @@ export class UserService {
     return { newUser, message: 'Por favor, verifica tu correo electrónico para continuar!' };
   }
 
-  update( branchId: string, id: string, data: User ) {
+  update( id: string, data: User ) {
     return this.prisma.user.update({
       where: {
-        branchId,
         id
       },
       data
     })
   }
 
-  remove( branchId: string, id: string ) {
+  remove( id: string ) {
     return this.prisma.user.delete({
       where: {
-        branchId,
         id
       }
     })
@@ -92,7 +85,7 @@ export class UserService {
     })
   }
 
-  async verifyEmail(verificationToken: string) {
+  async verifyEmail( verificationToken: string ) {
     const user = await this.prisma.user.findFirst({ where: { verificationToken } });
     if (!user) throw new NotFoundException('Token de verificación no válido');
   
@@ -103,8 +96,7 @@ export class UserService {
   
     const payload = {
       userEmail: user.email,
-      userRole: user.role,
-      branchId: user.branchId
+      userRole: user.role
     };
   
     const token = await this.jwtService.signAsync(payload);

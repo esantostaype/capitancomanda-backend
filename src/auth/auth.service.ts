@@ -21,6 +21,7 @@ export class AuthService {
   private async generateToken( user: User, expiresIn: string ) {
     const payload = {
       userEmail: user.email,
+      userId: user.id,
       userRole: user.role,
       branchId: user.branchId,
       ownedRestaurantId: user.ownedRestaurantId
@@ -55,7 +56,7 @@ export class AuthService {
   async registerOwner(data: RegisterOwnerDto) {
     const user = await this.userService.findOneByEmail(data.email);
     if ( user ) {
-      if ( user.status === UserStatus.VERIFIED ) {
+      if ( user.status === UserStatus.ACTIVE ) {
         const token = await this.generateToken( user, '30d');
         return { user, token };
       } else {
@@ -117,7 +118,7 @@ export class AuthService {
     await this.prisma.category.create({
       data: {
         name: 'Sin Categoría',
-        branchId: createdBranch.id,
+        userId: user.id,
       },
     });
 
@@ -184,7 +185,7 @@ export class AuthService {
     await this.prisma.category.create({
       data: {
         name: 'Sin Categoría',
-        branchId: createdBranch.id,
+        userId: user.id,
       },
     })
 

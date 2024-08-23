@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Param, Delete, Body, Put, UseGuards } from '@nestjs/common'
 import { ProductService } from './product.service'
-import { Product } from '@prisma/client'
+import { Product, Role } from '@prisma/client'
 import { UserContext } from 'src/auth/decorators/user-context.decorator'
 import { AuthGuard } from 'src/auth/guard/auth.guard'
 
@@ -11,7 +11,7 @@ export class ProductController {
 
   @Get()
   async findAll(
-    @UserContext() userContext: { userRole: string, branchId: string, ownedRestaurantId: string }
+    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
     const { userRole, branchId, ownedRestaurantId } = userContext
     return this.productService.findAll( userRole, branchId, ownedRestaurantId )
@@ -19,7 +19,7 @@ export class ProductController {
 
   @Get('branch/:branchId')
   async findByBranch(
-    @UserContext() userContext: { userRole: string, branchId: string, ownedRestaurantId: string },
+    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string },
     @Param('branchId') branch: string
   ) {
     const { userRole } = userContext
@@ -29,7 +29,7 @@ export class ProductController {
   @Get('category/:categoryId')
   async findByCategory(
     @Param('categoryId') categoryId: string,
-    @UserContext() userContext: { userRole: string, branchId: string, ownedRestaurantId: string }
+    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
     const { userRole, branchId, ownedRestaurantId } = userContext;
     return this.productService.findByCategory( userRole, categoryId, branchId, ownedRestaurantId )
@@ -38,7 +38,7 @@ export class ProductController {
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @UserContext() userContext: { userRole: string, branchId: string, ownedRestaurantId: string }
+    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
     const { userRole, branchId, ownedRestaurantId } = userContext
     return this.productService.findOne( userRole, branchId, ownedRestaurantId, id )
@@ -47,28 +47,28 @@ export class ProductController {
   @Post()
   async create(
     @Body() data: Product,
-    @UserContext() userContext: { userId: string }
+    @UserContext() userContext: { userRole: Role, userId: string }
   ) {
-    const { userId } = userContext
-    return this.productService.create( userId, data )
+    const { userId, userRole } = userContext
+    return this.productService.create( userRole, userId, data )
   }
 
   @Put(':id')
   async update(
     @Param('id') id: string,
     @Body() data: Product,
-    @UserContext() userContext: { branchId: string }
+    @UserContext() userContext: { userRole: Role, branchId: string }
   ) {
-    const { branchId } = userContext
-    return this.productService.update( branchId, id, data )
+    const { branchId, userRole } = userContext
+    return this.productService.update( userRole, branchId, id, data )
   }
 
   @Delete(':id')
   async remove(
     @Param('id') id: string,
-    @UserContext() userContext: { branchId: string }
+    @UserContext() userContext: { userRole: Role, branchId: string }
   ) {
-    const { branchId } = userContext
-    return this.productService.remove( branchId, id )
+    const { branchId, userRole } = userContext
+    return this.productService.remove( userRole, branchId, id )
   }
 }

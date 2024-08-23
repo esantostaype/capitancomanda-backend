@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User, UserStatus } from '@prisma/client';
+import { Role, User, UserStatus } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid'
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import * as bcryptjs from 'bcryptjs';
+import { throwUnauthorizedException } from 'src/utils';
 
 @Injectable()
 export class UserService {
@@ -15,18 +16,37 @@ export class UserService {
     private prisma: PrismaService
   ) {}
 
-  findAll() {
-    return this.prisma.user.findMany({
-      orderBy: {
-        id: 'asc'
-      },
-      include: {
-        branch: true
-      }
-    })
+  async findAll( userRole: Role, branchId: string, ownedRestaurantId: string ): Promise<User[]> {
+    if ( userRole === Role.OWNER ) {
+      return await this.prisma.user.findMany({
+        where: {
+          branch: { restaurantId: ownedRestaurantId }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        include: {
+          branch: true
+        }
+      })
+    } else if ( userRole === Role.ADMIN ) {
+      return await this.prisma.user.findMany({
+        where: {
+          branchId,
+          role: {
+            not: Role.OWNER
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+      })
+    } else {
+      throwUnauthorizedException()
+    }
   }
 
-  findOneByEmail( email: string ) {
+  async findOneByEmail( email: string ) {
     return this.prisma.user.findUnique({
       where: {
         email
@@ -34,43 +54,97 @@ export class UserService {
     })
   }
 
-  findOne( id: string ) {
-    return this.prisma.user.findUnique({
-      where: {
-        id
-      }
-    })
+  async findOne( userRole: Role, branchId: string, ownedRestaurantId: string, id: string ) {
+    if ( userRole === Role.OWNER ) {
+      return await this.prisma.user.findFirst({
+        where: {
+          id,
+          branch: { restaurantId: ownedRestaurantId }
+        }
+      })
+    } else if ( userRole === Role.ADMIN ) {
+      return await this.prisma.user.findFirst({
+        where: {
+          id,
+          branchId,
+          role: {
+            not: Role.OWNER
+          }
+        }
+      })
+    } else {
+      throwUnauthorizedException()
+    }
   }
 
-  async create( data: User ) {
-    const newUser = await this.prisma.user.create({
-      data: {
-        ...data,
-        password: await bcryptjs.hash( data.password, 6 ),
-        verificationToken: uuidv4(),
-        status: UserStatus.NOT_VERIFIED
-      }
-    })
+  async create( userRole: Role, branchId: string, data: User ) {
+    if ( userRole === Role.OWNER ) {
+      const newUser = await this.prisma.user.create({
+        data: {
+          ...data,
+          password: await bcryptjs.hash( data.password, 6 ),
+          verificationToken: uuidv4(),
+          status: UserStatus.NOT_VERIFIED
+        }
+      })
 
-    await this.sendVerificationEmail(newUser.email, newUser.verificationToken);
-    return { newUser, message: 'Por favor, verifica tu correo electrónico para continuar!' };
+      await this.sendVerificationEmail(newUser.email, newUser.verificationToken);
+      return { newUser, message: 'Se debe verificar el correo electrónico para continuar!' };
+    } else if ( userRole === Role.ADMIN ) {
+      const newUser = await this.prisma.user.create({
+        data: {
+          ...data,
+          branchId,
+          password: await bcryptjs.hash( data.password, 6 ),
+          verificationToken: uuidv4(),
+          status: UserStatus.NOT_VERIFIED
+        }
+      })
+
+      await this.sendVerificationEmail(newUser.email, newUser.verificationToken);
+      return { newUser, message: 'Se debe verificar el correo electrónico para continuar!' };
+    } else {
+      throwUnauthorizedException()
+    }
   }
 
-  update( id: string, data: User ) {
-    return this.prisma.user.update({
-      where: {
-        id
-      },
-      data
-    })
+  async update( userRole: Role, id: string, data: Partial<User> ) {
+    if ( userRole === Role.OWNER ) {
+      return this.prisma.user.update({
+        where: {
+          id
+        },
+        data: {
+          ...data,
+          tokenVersion: { increment: 1 }
+        }
+      })
+    } else if ( Role.ADMIN ) {
+      return this.prisma.user.update({
+        where: {
+          id,
+          role: {
+            not: Role.OWNER
+          }
+        },
+        data
+      })
+    } else {
+      throwUnauthorizedException()
+    }
   }
 
-  remove( id: string ) {
-    return this.prisma.user.delete({
-      where: {
-        id
-      }
-    })
+  async remove( userRole: Role, branchId: string, id: string ) {
+    if ( userRole === Role.OWNER || Role.ADMIN ) {
+      return this.prisma.user.delete({
+        where: {
+          id,
+          branchId
+        }
+      })
+    } else {
+      throwUnauthorizedException()
+    }
   }
 
   async sendVerificationEmail(email: string, verificationToken: string) {
@@ -91,16 +165,20 @@ export class UserService {
   
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { status: UserStatus.ACTIVE },
-    });
+      data: { status: UserStatus.ACTIVE }
+    })
   
     const payload = {
       userEmail: user.email,
-      userRole: user.role
-    };
+      userFullName: user.fullName,
+      userId: user.id,
+      userRole: user.role,
+      branchId: user.branchId,
+      tokenVersion: user.tokenVersion
+    }
   
-    const token = await this.jwtService.signAsync(payload);
+    const token = await this.jwtService.signAsync( payload )
   
-    return { user, token };
+    return { user, token }
   }
 }

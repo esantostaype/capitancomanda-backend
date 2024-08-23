@@ -1,21 +1,26 @@
 import { z } from 'zod'
 
-function isValidTable( value: string ): boolean {
-  const num = parseInt( value )
-  return !isNaN( num ) && num >= 1 && num <= 10
-}
-
 export const OrderSchema = z.object({
-  table: z.string().refine(isValidTable, {
-    message: 'Ingresa un N° de Mesa entre 1 y 10',
-  }),
+  table: z.string(),
   total: z.number().min( 1, 'Hay errores en la Orden' ),
-  delivery: z.boolean(),
+  orderType: z.enum(['DINE_IN', 'TAKE_AWAY', 'DELIVERY']),
   order: z.array( z.object({
     id: z.string(),
     name: z.string(),
     price: z.number(),
     quantity: z.number(),
-    subtotal: z.number()
-  }) )
+    subtotal: z.number(),
+    uniqueId: z.string(),
+    variationPrice: z.number(),
+    selectedVariants: z.object({}).nullable(),
+    selectedAdditionals: z.object({}).nullable(),
+    notes: z.string().default("").nullable()
+  }) ),
+  client: z.object({
+    fullName: z.string().optional(),
+    dni: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().optional(),
+  }).optional(),
+  notes: z.string().default("").nullable()
 })

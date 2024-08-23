@@ -15,7 +15,7 @@ export class OrderController {
 
   @Get()
   async findAll(
-    @UserContext() userContext: { userRole: string, branchId: string, ownedRestaurantId: string }
+    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
     const { userRole, branchId, ownedRestaurantId } = userContext;
     return this.orderService.findAll( userRole, branchId, ownedRestaurantId );
@@ -24,7 +24,7 @@ export class OrderController {
   @Get(':status')
   async findByStatus(
     @Param('status') status: OrderStatus,
-    @UserContext() userContext: { userRole: string, branchId: string, ownedRestaurantId: string }
+    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
     const { userRole, branchId, ownedRestaurantId } = userContext;
     return this.orderService.findByStatus( userRole, branchId, ownedRestaurantId, status );
@@ -33,7 +33,7 @@ export class OrderController {
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @UserContext() userContext: { userRole: string, branchId: string, ownedRestaurantId: string }
+    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
     const { userRole, branchId, ownedRestaurantId } = userContext
     return this.orderService.findOne( userRole, branchId, ownedRestaurantId, id);

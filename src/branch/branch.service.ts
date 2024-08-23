@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Branch } from '@prisma/client';
+import { Branch, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { throwUnauthorizedException } from 'src/utils';
 
 @Injectable()
 export class BranchService {
@@ -13,18 +14,32 @@ export class BranchService {
         restaurantId: ownedRestaurantId
       },
       include: {
-        users: true
+        users: {
+          select: {
+            fullName: true
+          }
+        }
       }
     })
   }
 
-  async findOne( ownedRestaurantId: string, id: string ): Promise<Branch> {
-    return this.prisma.branch.findUnique({
-      where: {
-        restaurantId: ownedRestaurantId,
-        id
-      }
-    })
+  async findOne( userRole: string, ownedRestaurantId: string, id: string ): Promise<Branch> {
+    if ( userRole === Role.OWNER ) {
+      return this.prisma.branch.findUnique({
+        where: {
+          restaurantId: ownedRestaurantId,
+          id
+        }
+      })
+    } else if ( userRole === Role.MANAGER ) {
+      return this.prisma.branch.findUnique({
+        where: {
+          id
+        }
+      })
+    } else {
+      throwUnauthorizedException()
+    }
   }
 
   async create( ownedRestaurantId: string, data: Branch ): Promise<Branch> {
@@ -36,14 +51,25 @@ export class BranchService {
     })
   }
 
-  async update( ownedRestaurantId: string, id: string, data: Branch ): Promise<Branch> {
-    return this.prisma.branch.update({
-      where: {
-        restaurantId: ownedRestaurantId,
-        id
-      },
-      data
-    })
+  async update( userRole: string, ownedRestaurantId: string, id: string, data: Branch ): Promise<Branch> {
+    if ( userRole === Role.OWNER ) {
+      return this.prisma.branch.update({
+        where: {
+          restaurantId: ownedRestaurantId,
+          id
+        },
+        data
+      })
+    } else if ( userRole === Role.MANAGER ) {
+      return this.prisma.branch.update({
+        where: {
+          id
+        },
+        data
+      })
+    } else {
+      throwUnauthorizedException()
+    }
   }
 
   async remove( ownedRestaurantId: string, id: string ): Promise<Branch> {

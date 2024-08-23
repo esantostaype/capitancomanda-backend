@@ -10,6 +10,7 @@ import { BranchModule } from './branch/branch.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PassportModule } from '@nestjs/passport';
+import { ClientModule } from './client/client.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PassportModule } from '@nestjs/passport';
     OrderModule,
     CloudinaryModule,
     UserModule,
+    ClientModule,
     AuthModule,
     PassportModule.register({
       session: true

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgres"
   url = env("DATABASE_URL")
 }
 
@@ -33,11 +33,24 @@ enum OrderStatus {
   CANCELED
 }
 
+enum MeasurementUnit {
+  GRAM
+  KILOGRAM
+  LITER
+  MILLILITER
+  PIECE
+}
+
+enum OrderType {
+  DINE_IN // Para comer en el salón
+  TAKE_AWAY // Para llevar
+  DELIVERY // Para entrega a domicilio
+}
+
 model Restaurant {
   id String @id @default(uuid())
   name String
-  address String?
-  phoneNumber String?
+  logo String?
   owners User[] @relation("RestaurantOwners")
   branches Branch[]
   createdAt DateTime? @default(now())
@@ -48,9 +61,11 @@ model Branch {
   name String
   address String?
   phoneNumber String?
+  image String?
   restaurantId String
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   users User[]
+  floors Json?
   createdAt DateTime? @default(now())
 }
 
@@ -71,13 +86,29 @@ model User {
   resetPasswordExpires DateTime?
   categories Category[]
   products Product[]
-  orders Order[]
+  clients Client[]
+  orders Order[] @relation("UserOrders")
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
+  tokenVersion Int @default(0)
+}
+
+model Client {
+  id String @id @default(uuid())
+  fullName String?
+  dni String? @unique
+  phone String?
+  email String?
+  role Role @default(CLIENT)
+  clientOrders Order[] @relation("ClientOrders")
+  createdAt DateTime? @default(now())
+  userId String
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Category {
   id String @id @default(uuid())
+  order Int?
   name String
   image String?
   products Product[]
@@ -92,27 +123,59 @@ model Product {
   description String?
   price Float
   image String?
-  variants Json?
+  variations Json?
+  additionals Json?
   ingredients Json?
   orderItems OrderProduct[]
   categoryId String
-  category Category?  @relation(fields: [categoryId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
   userId String
   user User @relation(fields: [userId], references: [id])
   createdAt DateTime? @default(now())
 }
 
+// model Variant {
+//   id String @id @default(uuid())
+//   name String
+//   hasPrice Boolean
+//   options VariantOption[]
+//   productId String
+//   product Product @relation(fields: [productId], references: [id])
+// }
+
+// model VariantOption {
+//   id String @id @default(uuid())
+//   name String
+//   price Float
+//   variantId String
+//   variant Variant @relation(fields: [variantId], references: [id])
+// }
+
+// model Ingredient {
+//   id String @id @default(uuid())
+//   name String
+//   quantity Float
+//   unit MeasurementUnit
+//   productId String
+//   product Product @relation(fields: [productId], references: [id])
+// }
+
 model Order {
   id String @id @default(uuid())
   total Float
   table String
-  delivery Boolean @default(false)
+  amount Int?
+  orderNumber String @unique
+  orderType OrderType @default(DINE_IN)
+  notes String?
   status OrderStatus
   date DateTime @default(now())
   orderReadyAt DateTime?
   orderProducts OrderProduct[]
   userId String
-  user User @relation(fields: [userId], references: [id])
+  user User @relation("UserOrders", fields: [userId], references: [id])
+  clientId String?
+  client Client? @relation("ClientOrders", fields: [clientId], references: [id])
   createdAt DateTime? @default(now())
 }
 
@@ -123,5 +186,9 @@ model OrderProduct {
   productId String
   product Product @relation(fields: [productId], references: [id])
   quantity Int
-  spicyLevelNumber Int?
+  uniqueId String
+  selectedVariants Json?
+  selectedAdditionals Json?
+  variationPrice Float?
+  notes String?
 }

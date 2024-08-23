@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import { Product, Role } from '@prisma/client'
 import { PrismaService } from 'src/prisma/prisma.service'
+import { throwUnauthorizedException } from 'src/utils'
 
 @Injectable()
 export class ProductService {
-  constructor( private prisma: PrismaService ) {}
+  
+  constructor( private prisma: PrismaService ) {}  
 
-  async findAll( userRole: string, branchId: string, ownedRestaurantId: string ): Promise<Product[]> {
+  async findAll( userRole: Role, branchId: string, ownedRestaurantId: string ): Promise<Product[]> {
     if ( userRole === Role.OWNER ) {
       return await this.prisma.product.findMany({
         where: {
@@ -38,7 +40,7 @@ export class ProductService {
           createdAt: 'desc'
         },
       })
-    } else {
+    } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
       return await this.prisma.product.findMany({
         where: {
           user: {
@@ -67,10 +69,12 @@ export class ProductService {
           createdAt: 'desc'
         },
       })
+    } else {
+      throwUnauthorizedException()
     }
   }
 
-  async findByCategory( userRole: string, category: string, branchId: string, ownedRestaurantId: string ) {
+  async findByCategory( userRole: Role, category: string, branchId: string, ownedRestaurantId: string ) {
     if ( userRole === Role.OWNER ) {
       return this.prisma.product.findMany({
         where: {
@@ -105,7 +109,7 @@ export class ProductService {
           createdAt: 'desc'
         },
       })
-    } else {
+    } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
       return this.prisma.product.findMany({
         where: {
           category: {
@@ -137,10 +141,12 @@ export class ProductService {
           createdAt: 'desc'
         }
       })
+    } else {
+      throwUnauthorizedException()
     }
   }
 
-  async findByBranch( userRole: string, branch: string ) {
+  async findByBranch( userRole: Role, branch: string ) {
     if ( userRole === Role.OWNER ) {
       return this.prisma.product.findMany({
         where: {
@@ -170,10 +176,12 @@ export class ProductService {
           createdAt: 'desc'
         },
       })
+    } else {
+      throwUnauthorizedException()
     }
   }
 
-  async findOne( userRole: string, branchId: string, ownedRestaurantId: string, id: string ): Promise<Product> {
+  async findOne( userRole: Role, branchId: string, ownedRestaurantId: string, id: string ): Promise<Product> {
     if ( userRole === Role.OWNER ) {
       return await this.prisma.product.findFirst({
         where: {
@@ -203,7 +211,7 @@ export class ProductService {
           }
         }
       })
-    } else {
+    } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
       return await this.prisma.product.findFirst({
         where: {
           id,
@@ -230,43 +238,57 @@ export class ProductService {
           }
         }
       })
+    } else {
+      throwUnauthorizedException()
     }
   }
 
-  async create( userId: string, data: Product ): Promise<Product> {
-    return await this.prisma.product.create({
-      data: {
-        ...data,
-        userId
-      }
-    })
+  async create( userRole: Role, userId: string, data: Product ): Promise<Product> {
+    if ( userRole === Role.OWNER || Role.ADMIN || Role.MANAGER ) {
+      return await this.prisma.product.create({
+        data: {
+          ...data,
+          userId
+        }
+      })
+    } else {
+      throwUnauthorizedException()
+    }
   }
 
-  async update( branchId: string, id: string, data: Product ): Promise<Product> {
-    return await this.prisma.product.update({
-      where: {
-        id,
-        user: {
-          branchId
-        }
-      },
-      data
-    })
+  async update( userRole: Role, branchId: string, id: string, data: Product ): Promise<Product> {
+    if ( userRole === Role.OWNER || Role.ADMIN || Role.MANAGER ) {
+      return await this.prisma.product.update({
+        where: {
+          id,
+          user: {
+            branchId
+          }
+        },
+        data
+      })
+    } else {
+      throwUnauthorizedException()
+    }
   }
 
-  async remove( branchId: string, id: string ): Promise<Product> {
-    await this.prisma.orderProduct.deleteMany({
-      where: {
-        productId: id
-      }
-    })
-    return await this.prisma.product.delete({
-      where: {
-        id,
-        user: {
-          branchId
+  async remove( userRole: Role, branchId: string, id: string ): Promise<Product> {
+    if ( userRole === Role.OWNER || Role.ADMIN || Role.MANAGER ) {
+      await this.prisma.orderProduct.deleteMany({
+        where: {
+          productId: id
         }
-      }
-    })
+      })
+      return await this.prisma.product.delete({
+        where: {
+          id,
+          user: {
+            branchId
+          }
+        }
+      })
+    } else {
+      throwUnauthorizedException()
+    }
   }
 }

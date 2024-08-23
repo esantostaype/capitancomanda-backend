@@ -21,6 +21,7 @@ export class AuthService {
   private async generateToken( user: User, expiresIn: string ) {
     const payload = {
       userEmail: user.email,
+      userFullName: user.fullName,
       userId: user.id,
       userRole: user.role,
       branchId: user.branchId,
@@ -188,16 +189,7 @@ export class AuthService {
         userId: user.id,
       },
     })
-
-    const payload = {
-      userId: user.id,
-      userEmail: user.email,
-      userRole: user.role,
-      branchId: createdBranch.id,
-      ownedRestaurantId: restaurant.id,
-    }
-
-    const token = await this.jwtService.signAsync(payload)
+    const token = await this.generateToken( user, '30d');
 
     return {
       email,
@@ -225,15 +217,7 @@ export class AuthService {
       where: { id: user.id },
       data: { status: UserStatus.ACTIVE },
     });
-  
-    const payload = {
-      userEmail: user.email,
-      userRole: user.role,
-      branchId: user.branchId,
-      ownedRestaurantId: user.ownedRestaurantId,
-    };
-  
-    const token = await this.jwtService.signAsync(payload);
+    const token = await this.generateToken( user, '30d');
   
     return { user, token };
   }

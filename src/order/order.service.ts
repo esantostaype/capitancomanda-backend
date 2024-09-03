@@ -20,17 +20,6 @@ export class OrderService {
           }
         },
         include: {
-          orderProducts: {
-            include: {
-              product: {
-                select: {
-                  name: true,
-                  price: true,
-                  variations: true
-                }
-              }
-            }
-          },
           user: {
             select: {
               fullName: true,
@@ -40,6 +29,11 @@ export class OrderService {
                 }
               },
               branchId: true
+            }
+          },
+          client: {
+            select: {
+              fullName: true
             }
           }
         },
@@ -55,25 +49,9 @@ export class OrderService {
           },
         },
         include: {
-          orderProducts: {
-            include: {
-              product: {
-                select: {
-                  name: true,
-                  price: true,
-                  variations: true
-                }
-              }
-            }
-          },
           user: {
             select: {
               fullName: true,
-              branch: {
-                select: {
-                  name: true,
-                }
-              },
               branchId: true
             }
           }
@@ -206,6 +184,31 @@ export class OrderService {
     }
   }
 
+  async findLastOrder( userId: string ): Promise<{ orderNumber: string | null }> {
+    return await this.prisma.order.findFirst({
+      orderBy: { createdAt: 'desc' },
+      where: { userId },
+      select: {
+        orderNumber: true
+      }
+    })
+  }
+
+  async generateOrderNumber( userId: string ): Promise<string> {
+    const lastOrder = await this.prisma.order.findFirst({
+      orderBy: { createdAt: 'desc' },
+      where: { userId }
+    })
+  
+    let orderIncrement = '00001'
+    if ( lastOrder && lastOrder.orderNumber ) {
+      const lastNumber = parseInt( lastOrder.orderNumber, 10 )
+      orderIncrement = ( lastNumber + 1 ).toString().padStart( 5, '0' )
+    }
+  
+    return orderIncrement
+  }
+
   async create( userId: string, data: Order ): Promise<any> {
     const result = OrderSchema.safeParse(data);
     if (!result.success) {
@@ -234,7 +237,7 @@ export class OrderService {
             phone: result.data.client.phone,
             email: result.data.client.email,
             role: Role.CLIENT,
-            userId: userId
+            userId
           },
         })
         clientId = newClient.id
@@ -242,24 +245,13 @@ export class OrderService {
     }
   
     try {
-      const lastOrder = await this.prisma.order.findFirst({
-        orderBy: {
-          createdAt: 'desc'
-        }
-      })
-  
-      let orderIncrement = '00001'
-      if ( lastOrder && lastOrder.orderNumber ) {
-        const lastNumber = parseInt( lastOrder.orderNumber, 10 );
-        orderIncrement = ( lastNumber + 1 ).toString().padStart( 5, '0' )
-      }
-  
-      const orderNumber = orderIncrement
+      const orderNumber = await this.generateOrderNumber( userId )
       
       await this.prisma.order.create({
         data: {
           userId: userId,
           clientId: clientId,
+          floor: result.data.floor,
           table: result.data.table,
           orderType: result.data.orderType,
           total: result.data.total,
@@ -290,6 +282,65 @@ export class OrderService {
       throw error;
     }
   }
+
+  async createOrder( userId: string, data: any ): Promise<any> {
+
+    const orderNumber = await this.generateOrderNumber( userId )
+
+    let clientId = null
+
+    if ( data.client && ( data.client.dni || data.client.fullName )) {
+      const existingClient = await this.prisma.client.findUnique({
+        where: {
+          dni: data.client.dni
+        }
+      })
+
+      if ( existingClient ) {
+        clientId = existingClient.id
+      } else {
+        const newClient = await this.prisma.client.create({
+          data: {
+            fullName: data.client.fullName,
+            dni: data.client.dni,
+            phone: data.client.phone,
+            email: data.client.email,
+            role: Role.CLIENT,
+            userId
+          },
+        })
+        clientId = newClient.id
+      }
+    }
+
+    const order = await this.prisma.order.create({
+      data: {
+        orderNumber,
+        total: data.total,
+        floor: data.floor,
+        table: data.table,
+        orderType: data.orderType,
+        notes: data.notes,
+        status: OrderStatus.RECEIVED,
+        userId: userId,
+        clientId: clientId,
+        orderProducts: {
+          create: data.order.map(( item: any ) => ({
+            productId: item.id,
+            quantity: item.quantity,
+            uniqueId: item.uniqueId,
+            selectedVariants: item.selectedVariations,
+            selectedAdditionals: item.selectedAdditionals,
+            variationPrice: item.variationPrice,
+            notes: item.notes
+          }))
+        }
+      }
+    })
+
+    return { success: true, order }
+  }
+
 
   async update( branchId: string, id: string, data: Order ): Promise<any> {
     if( data.status === OrderStatus.READY ){

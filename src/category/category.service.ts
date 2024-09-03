@@ -37,7 +37,7 @@ export class CategoryService {
           }
         },
         orderBy: {
-          createdAt: 'desc'
+          orderNumber: 'asc'
         },
       });
     } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
@@ -178,10 +178,27 @@ export class CategoryService {
   }
 
   async create( userRole: Role, userId: string, data: Category ): Promise<Category> {
+    const lastOrder = await this.prisma.category.findFirst({
+      where: {
+        userId
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    let orderIncrement = 1
+    if ( lastOrder && lastOrder.orderNumber ) {
+      orderIncrement = lastOrder.orderNumber + 1
+    }
+
+    const orderNumber = orderIncrement
+
     if ( userRole === Role.OWNER || Role.MANAGER || Role.ADMIN ) {
       return this.prisma.category.create({
         data: {
           ...data,
+          orderNumber,
           userId
         }
       })

@@ -27,18 +27,14 @@ export class ClientController {
     return this.clientService.findOne( userRole, branchId, ownedRestaurantId, id );
   }
 
-  @Get('dni/:dni')
-  async findByDni(
-    @Param('dni') dni: string
+  @UseGuards(AuthGuard)
+  @Get('search/:searchTerm')
+  async searchClient(
+    @Param('searchTerm') searchTerm: string,
+    @UserContext() userContext: { userId: string }
   ) {
-    return this.clientService.findByDni( dni );
-  }
-
-  @Get('name/:name')
-  async findByName(
-    @Param('name') name: string
-  ) {
-    return this.clientService.findByName( name );
+    const { userId } = userContext;
+    return this.clientService.findByNameOrDni(searchTerm, userId);
   }
 
   @UseGuards(AuthGuard)

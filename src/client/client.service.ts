@@ -59,20 +59,28 @@ export class ClientService {
     }
   }
 
-  async findByDni( dni: string ) {
-    return this.prisma.client.findUnique({
-      where: {
-        dni
-      }
-    })
-  }
+  async findByNameOrDni( searchTerm: string, userId: string ): Promise<Client[]> {
 
-  async findByName( fullName: string ) {
-    return this.prisma.client.findMany({
-      where: {
-        fullName
-      }
-    })
+    if ( searchTerm.length === 8 && /^\d+$/.test( searchTerm )) {
+      return this.prisma.client.findMany({
+        where: {
+          dni: searchTerm,
+          userId: userId,
+        }
+      })
+    } else if ( searchTerm.length >= 3 ) {
+      return this.prisma.client.findMany({
+        where: {
+          fullName: {
+            contains: searchTerm,
+            mode: 'insensitive'
+          },
+          userId: userId
+        }
+      })
+    } else {
+      return []
+    }
   }
 
   async create( UserId: string, data: Client ) {

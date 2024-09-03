@@ -17,6 +17,11 @@ export class RestaurantController {
     return this.restaurantService.findOne( id);
   }
 
+  @Get('branchId/:branchId')
+  async findOneBybranchId( @Param('branchId') branchId: string ) {
+    return this.restaurantService.findOneBybranchId( branchId);
+  }
+
   @Put(':id')
   async update( @Param('id') id: string, @Body() data: Restaurant ) {
     return this.restaurantService.update( id, data );

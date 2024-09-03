@@ -1,7 +1,7 @@
 {
   "version": 2,
   "env": {
-      "DATABASE_URL": "postgres://postgres.zilzofpyhwswrzanvrom:capitancomanda@aws-0-us-west-1.pooler.supabase.com:5432/postgres"
+      "DATABASE_URL": "postgres://default:MacP0LU6tXgI@ep-lucky-glitter-a4fazq7g.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"
   },
   "builds": [
       {

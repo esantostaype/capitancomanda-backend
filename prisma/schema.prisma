@@ -42,9 +42,9 @@ enum MeasurementUnit {
 }
 
 enum OrderType {
-  DINE_IN // Para comer en el salón
-  TAKE_AWAY // Para llevar
-  DELIVERY // Para entrega a domicilio
+  DINE_IN
+  TAKE_AWAY
+  DELIVERY
 }
 
 model Restaurant {
@@ -108,7 +108,7 @@ model Client {
 
 model Category {
   id String @id @default(uuid())
-  order Int?
+  orderNumber Int?
   name String
   image String?
   products Product[]
@@ -119,6 +119,7 @@ model Category {
 
 model Product {
   id String @id @default(uuid())
+  orderNumber Int?
   name String
   description String?
   price Float
@@ -162,10 +163,11 @@ model Product {
 
 model Order {
   id String @id @default(uuid())
+  orderNumber String?
   total Float
+  floor String?
   table String
   amount Int?
-  orderNumber String @unique
   orderType OrderType @default(DINE_IN)
   notes String?
   status OrderStatus

@@ -22,6 +22,18 @@ export class RestaurantService {
     })
   }
 
+  async findOneBybranchId( branchId: string ): Promise<Restaurant | null> {
+    return this.prisma.restaurant.findFirst({
+      where: {
+        branches: {
+          some: {
+            id: branchId
+          }
+        }
+      }
+    })
+  }
+
   async update( id: string, data: Restaurant ): Promise<Restaurant> {
     return this.prisma.restaurant.update({
       where: {

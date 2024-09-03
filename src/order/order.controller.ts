@@ -21,6 +21,14 @@ export class OrderController {
     return this.orderService.findAll( userRole, branchId, ownedRestaurantId );
   }
 
+  @Get(':last-order')
+  async findLastOrder(
+    @UserContext() userContext: { userId: string }
+  ) {
+    const { userId } = userContext;
+    return this.orderService.findLastOrder( userId );
+  }
+
   @Get(':status')
   async findByStatus(
     @Param('status') status: OrderStatus,
@@ -45,7 +53,7 @@ export class OrderController {
     @UserContext() userContext: { userId: string }
   ) {
     const { userId } = userContext
-    return this.orderService.create( userId, data );
+    return this.orderService.createOrder( userId, data );
   }
 
   @Put(':id')

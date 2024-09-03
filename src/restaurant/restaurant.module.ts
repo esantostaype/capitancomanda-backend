@@ -6,7 +6,8 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 @Module({
   controllers: [ RestaurantController ],
   providers: [ RestaurantService ],
-  imports: [ PrismaModule ]
+  imports: [ PrismaModule ],
+  exports: [ RestaurantService ]
 })
 
 export class RestaurantModule {}

@@ -1,7 +1,8 @@
 import { z } from 'zod'
 
 export const OrderSchema = z.object({
-  table: z.string(),
+  floor: z.string().optional(),
+  table: z.string().optional(),
   total: z.number().min( 1, 'Hay errores en la Orden' ),
   orderType: z.enum(['DINE_IN', 'TAKE_AWAY', 'DELIVERY']),
   order: z.array( z.object({

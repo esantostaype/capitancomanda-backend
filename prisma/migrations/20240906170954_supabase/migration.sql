@@ -75,7 +75,7 @@ CREATE TABLE "Client" (
 -- CreateTable
 CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
-    "order" INTEGER,
+    "orderNumber" INTEGER,
     "name" TEXT NOT NULL,
     "image" TEXT,
     "userId" TEXT NOT NULL,
@@ -87,6 +87,7 @@ CREATE TABLE "Category" (
 -- CreateTable
 CREATE TABLE "Product" (
     "id" TEXT NOT NULL,
+    "orderNumber" INTEGER,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "price" DOUBLE PRECISION NOT NULL,
@@ -104,10 +105,11 @@ CREATE TABLE "Product" (
 -- CreateTable
 CREATE TABLE "Order" (
     "id" TEXT NOT NULL,
+    "orderNumber" TEXT,
     "total" DOUBLE PRECISION NOT NULL,
+    "floor" TEXT,
     "table" TEXT NOT NULL,
     "amount" INTEGER,
-    "orderNumber" TEXT NOT NULL,
     "orderType" "OrderType" NOT NULL DEFAULT 'DINE_IN',
     "notes" TEXT,
     "status" "OrderStatus" NOT NULL,
@@ -140,9 +142,6 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Client_dni_key" ON "Client"("dni");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Order_orderNumber_key" ON "Order"("orderNumber");
 
 -- AddForeignKey
 ALTER TABLE "Branch" ADD CONSTRAINT "Branch_restaurantId_fkey" FOREIGN KEY ("restaurantId") REFERENCES "Restaurant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

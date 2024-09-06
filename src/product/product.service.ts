@@ -21,7 +21,8 @@ export class ProductService {
         include: {
           category: {
             select: {
-              name: true
+              name: true,
+              orderNumber: true
             }
           },
           user: {
@@ -50,7 +51,8 @@ export class ProductService {
         include: {
           category: {
             select: {
-              name: true
+              name: true,
+              orderNumber: true
             }
           },
           user: {
@@ -195,7 +197,8 @@ export class ProductService {
         include: {
           category: {
             select: {
-              name: true
+              name: true,
+              orderNumber: true
             }
           },
           user: {
@@ -222,7 +225,8 @@ export class ProductService {
         include: {
           category: {
             select: {
-              name: true
+              name: true,
+              orderNumber: true
             }
           },
           user: {

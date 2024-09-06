@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "env": {
-      "DATABASE_URL": "postgres://default:MacP0LU6tXgI@ep-lucky-glitter-a4fazq7g.us-east-1.aws.neon.tech:5432/verceldb?sslmode=require"
-  },
   "builds": [
       {
           "src": "src/main.ts",
@@ -10,15 +7,9 @@
       }
   ],
   "routes": [
-      {
-          "src": "/(.*)",
-          "dest": "src/main.ts",
-          "methods": [
-              "GET",
-              "POST",
-              "PUT",
-              "DELETE"
-          ]
-      }
+    {
+      "src": "/(.*)",
+      "dest": "/api"
+    }
   ]
 }

@@ -6,8 +6,8 @@
     "deleteOutDir": true,
     "assets": [
       {
-        "include": "templates/**/*",
-        "outDir": "dist/src/templates"
+        "include": "auth/templates/**/*",
+        "outDir": "dist/src"
       }
     ],
     "watchAssets": true

@@ -7,7 +7,7 @@ import { frontEndUrl } from './utils/index';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: [`${ frontEndUrl }`],
+    origin: [`${ frontEndUrl }`, 'http://localhost:3000'],
     credentials: true,
   })
   app.setGlobalPrefix('api')

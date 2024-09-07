@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { MailerService } from '@nestjs-modules/mailer'
 import { CompleteRegistrationDto, GoogleResitrationDto, RegisterOwnerDto } from './dto/register.dto'
 import { LoginDto } from './dto/login.dto'
-import { frontEndUrl } from 'src/utils'
+import { backendEndUrl, frontEndUrl } from 'src/utils'
 
 @Injectable()
 export class AuthService {
@@ -199,7 +199,7 @@ export class AuthService {
   }
 
   async sendVerificationEmail(email: string, verificationToken: string) {
-    const verificationLink = `http://localhost:3001/api/auth/verify/${verificationToken}`
+    const verificationLink = `${ backendEndUrl }/api/auth/verify/${verificationToken}`
     await this.mailerService.sendMail({
       to: email,
       subject: 'Verifica tu correo electrónico',

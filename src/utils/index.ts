@@ -5,3 +5,4 @@ export function throwUnauthorizedException(): never {
 }
 
 export const frontEndUrl = process.env.FRONT_END_URL
+export const backendEndUrl = process.env.BACKEND_END_URL

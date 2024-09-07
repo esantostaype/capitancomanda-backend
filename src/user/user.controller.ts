@@ -64,9 +64,9 @@ export class UserController {
   async verifyEmail(@Param('token') token: string, @Param('email') email: string, @Res() res: Response) {
     try {
       const { user } = await this.userService.verifyEmail(token)
-      return res.redirect(`${ frontEndUrl }/login?email=${ user.email }&token=${ token }`)
+      return res.redirect(`https://restify-frontend-production.up.railway.app//login?email=${ user.email }&token=${ token }`)
     } catch (error) {
-      return res.redirect(`${ frontEndUrl }/signup?token=expired`)
+      return res.redirect(`https://restify-frontend-production.up.railway.app//signup?token=expired`)
     }
   }
 }

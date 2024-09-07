@@ -233,7 +233,7 @@ export class AuthService {
       data: { resetPasswordToken: resetToken, resetPasswordExpires: new Date(Date.now() + 3600000) }, // Token expires in 1 hour
     });
 
-    const resetLink = `${ frontEndUrl }/login/changepassword?token=${resetToken}&email=${email}`;
+    const resetLink = `https://restify-frontend-production.up.railway.app//login/changepassword?token=${resetToken}&email=${email}`;
     await this.mailerService.sendMail({
       to: email,
       subject: 'Password Reset Request',

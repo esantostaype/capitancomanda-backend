@@ -4,6 +4,7 @@ import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { UserService } from './user.service';
 import { Response } from 'express'
 import { Role } from '@prisma/client';
+import { frontEndUrl } from 'src/utils';
 
 @Controller('users')
 export class UserController {
@@ -63,9 +64,9 @@ export class UserController {
   async verifyEmail(@Param('token') token: string, @Param('email') email: string, @Res() res: Response) {
     try {
       const { user } = await this.userService.verifyEmail(token)
-      return res.redirect(`http://localhost:3000/login?email=${ user.email }&token=${ token }`)
+      return res.redirect(`${ frontEndUrl }/login?email=${ user.email }&token=${ token }`)
     } catch (error) {
-      return res.redirect(`http://localhost:3000/signup?token=expired`)
+      return res.redirect(`${ frontEndUrl }/signup?token=expired`)
     }
   }
 }

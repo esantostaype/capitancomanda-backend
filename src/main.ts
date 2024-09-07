@@ -1,18 +1,26 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import * as session from 'express-session';
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
+import * as session from 'express-session'
 import * as passport from 'passport'
+import { ConfigService } from '@nestjs/config'
+import { EnvConfig } from 'src/utils'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+
+  const app = await NestFactory.create(AppModule)
+  const configService = app.get(ConfigService)  
+  
+  EnvConfig.init(configService)
+
   app.enableCors({
-    origin: 'https://restify-frontend-production.up.railway.app/',
+    origin: EnvConfig.frontendUrl,
     credentials: true
   })
+  
   app.setGlobalPrefix('api')
   app.use(
     session({
-      secret: 'anselwho-gaaa',
+      secret: EnvConfig.jwtSecret,
       saveUninitialized: false,
       resave: false,
       cookie: {

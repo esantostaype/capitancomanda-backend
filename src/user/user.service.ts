@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import * as bcryptjs from 'bcryptjs';
-import { backendEndUrl, throwUnauthorizedException } from 'src/utils';
+import { throwUnauthorizedException, EnvConfig } from 'src/utils';
 
 @Injectable()
 export class UserService {
@@ -148,7 +148,7 @@ export class UserService {
   }
 
   async sendVerificationEmail(email: string, verificationToken: string) {
-    const verificationLink = `${ backendEndUrl }/api/users/verify/${verificationToken}`
+    const verificationLink = `${ EnvConfig.backendUrl }/api/users/verify/${verificationToken}`
     await this.mailerService.sendMail({
       to: email,
       subject: 'Verifica tu correo electrónico',

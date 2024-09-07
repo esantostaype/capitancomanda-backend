@@ -6,7 +6,7 @@ import * as passport from 'passport'
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: 'https://restify-frontend-production.up.railway.app',
+    origin: 'https://restify-frontend-production.up.railway.app/',
     credentials: true
   })
   app.setGlobalPrefix('api')

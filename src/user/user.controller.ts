@@ -4,7 +4,6 @@ import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { UserService } from './user.service';
 import { Response } from 'express'
 import { Role } from '@prisma/client';
-import { frontEndUrl } from 'src/utils';
 
 @Controller('users')
 export class UserController {
@@ -64,9 +63,9 @@ export class UserController {
   async verifyEmail(@Param('token') token: string, @Param('email') email: string, @Res() res: Response) {
     try {
       const { user } = await this.userService.verifyEmail(token)
-      return res.redirect(`https://restify-frontend-production.up.railway.app//login?email=${ user.email }&token=${ token }`)
+      return res.redirect(`https://restify-frontend-production.up.railway.app/login?email=${ user.email }&token=${ token }`)
     } catch (error) {
-      return res.redirect(`https://restify-frontend-production.up.railway.app//signup?token=expired`)
+      return res.redirect(`https://restify-frontend-production.up.railway.app/signup?token=expired`)
     }
   }
 }

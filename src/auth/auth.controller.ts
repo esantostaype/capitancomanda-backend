@@ -2,7 +2,6 @@ import { Body, Controller, Get, Param, Post, Query, Res } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { Response } from 'express'
 import { CompleteRegistrationDto, RegisterOwnerDto } from './dto/register.dto'
-import { frontEndUrl } from 'src/utils'
 
 @Controller('auth')
 export class AuthController {
@@ -23,9 +22,9 @@ export class AuthController {
   async verifyEmail(@Param('token') token: string, @Param('email') email: string, @Res() res: Response) {
     try {
       const { user } = await this.authService.verifyEmail(token)
-      return res.redirect(`https://restify-frontend-production.up.railway.app//signup/complete?email=${ user.email }&token=${ token }`)
+      return res.redirect(`https://restify-frontend-production.up.railway.app/signup/complete?email=${ user.email }&token=${ token }`)
     } catch (error) {
-      return res.redirect(`https://restify-frontend-production.up.railway.app//signup?token=expired`)
+      return res.redirect(`https://restify-frontend-production.up.railway.app/signup?token=expired`)
     }
   }
 

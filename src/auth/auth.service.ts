@@ -8,7 +8,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { MailerService } from '@nestjs-modules/mailer'
 import { CompleteRegistrationDto, GoogleResitrationDto, RegisterOwnerDto } from './dto/register.dto'
 import { LoginDto } from './dto/login.dto'
-import { backendEndUrl, frontEndUrl } from 'src/utils'
 
 @Injectable()
 export class AuthService {
@@ -233,7 +232,7 @@ export class AuthService {
       data: { resetPasswordToken: resetToken, resetPasswordExpires: new Date(Date.now() + 3600000) }, // Token expires in 1 hour
     });
 
-    const resetLink = `https://restify-frontend-production.up.railway.app//login/changepassword?token=${resetToken}&email=${email}`;
+    const resetLink = `https://restify-frontend-production.up.railway.app/login/changepassword?token=${resetToken}&email=${email}`;
     await this.mailerService.sendMail({
       to: email,
       subject: 'Password Reset Request',

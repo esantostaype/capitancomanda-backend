@@ -7,7 +7,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
     origin: 'https://restify-frontend-production.up.railway.app',
-    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true
   })
   app.setGlobalPrefix('api')
   app.use(
@@ -16,7 +17,8 @@ async function bootstrap() {
       saveUninitialized: false,
       resave: false,
       cookie: {
-        maxAge: 60000
+        maxAge: 60000,
+        secure: true
       }
     })
   )

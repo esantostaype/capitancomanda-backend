@@ -45,7 +45,7 @@ import { PrismaModule } from 'src/prisma/prisma.module';
           from: `"No Reply" <${configService.get<string>('SENDGRID_FROM_EMAIL')}>`,
         },
         template: {
-          dir: join(__dirname, 'templates'),
+          dir: join(__dirname, '..', 'templates'),
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,

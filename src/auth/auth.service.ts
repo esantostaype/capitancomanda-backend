@@ -199,7 +199,7 @@ export class AuthService {
   }
 
   async sendVerificationEmail(email: string, verificationToken: string) {
-    const verificationLink = `${ backendEndUrl }/api/auth/verify/${verificationToken}`
+    const verificationLink = `restify-backend-production.up.railway.app/api/auth/verify/${verificationToken}`
     await this.mailerService.sendMail({
       to: email,
       subject: 'Verifica tu correo electrónico',

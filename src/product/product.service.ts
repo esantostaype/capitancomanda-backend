@@ -37,9 +37,16 @@ export class ProductService {
             }
           }
         },
-        orderBy: {
-          createdAt: 'desc'
-        },
+        orderBy: [
+          {
+            category: {
+              orderNumber: 'asc'
+            }
+          },
+          {
+            name: 'asc'
+          }
+        ]
       })
     } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
       return await this.prisma.product.findMany({
@@ -67,9 +74,16 @@ export class ProductService {
             }
           }
         },
-        orderBy: {
-          createdAt: 'desc'
-        },
+        orderBy: [
+          {
+            category: {
+              orderNumber: 'asc'
+            }
+          },
+          {
+            name: 'asc'
+          }
+        ]
       })
     } else {
       throwUnauthorizedException()
@@ -108,7 +122,7 @@ export class ProductService {
           }
         },
         orderBy: {
-          createdAt: 'desc'
+          name: 'asc',
         },
       })
     } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
@@ -140,7 +154,7 @@ export class ProductService {
           }
         },
         orderBy: {
-          createdAt: 'desc'
+          name: 'asc',
         }
       })
     } else {
@@ -175,7 +189,7 @@ export class ProductService {
           }
         },
         orderBy: {
-          createdAt: 'desc'
+          name: 'asc',
         },
       })
     } else {

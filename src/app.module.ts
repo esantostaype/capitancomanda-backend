@@ -12,6 +12,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PassportModule } from '@nestjs/passport';
 import { ClientModule } from './client/client.module';
+import { SocketGateway } from './socket.gateway'
 
 @Module({
   imports: [
@@ -32,6 +33,6 @@ import { ClientModule } from './client/client.module';
     })
   ],
   controllers: [ AppController ],
-  providers: [ AppService ],
+  providers: [ AppService, SocketGateway ],
 })
 export class AppModule {}

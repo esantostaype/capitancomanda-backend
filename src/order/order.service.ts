@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Order, OrderStatus, Role } from '@prisma/client';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { OrderSchema } from 'src/schema';
 
 @Injectable()
 export class OrderService {
@@ -209,137 +207,143 @@ export class OrderService {
     return orderIncrement
   }
 
-  async create( userId: string, data: Order ): Promise<any> {
-    const result = OrderSchema.safeParse(data);
-    if (!result.success) {
-      return {
-        success: false,
-        errors: result.error.issues.map((issue) => issue.message),
-      }
-    }
+  // async create( userId: string, data: Order ): Promise<any> {
+  //   const result = OrderSchema.safeParse(data);
+  //   if (!result.success) {
+  //     return {
+  //       success: false,
+  //       errors: result.error.issues.map((issue) => issue.message),
+  //     }
+  //   }
 
-    let clientId = null
+  //   let clientId = null
 
-    if ( result.data.client && ( result.data.client.dni || result.data.client.fullName )) {
-      const existingClient = await this.prisma.client.findUnique({
-        where: {
-          dni: result.data.client.dni
-        }
-      })
+  //   if ( result.data.client && ( result.data.client.dni || result.data.client.fullName )) {
+  //     const existingClient = await this.prisma.client.findUnique({
+  //       where: {
+  //         dni: result.data.client.dni
+  //       }
+  //     })
 
-      if ( existingClient ) {
-        clientId = existingClient.id
-      } else {
-        const newClient = await this.prisma.client.create({
-          data: {
-            fullName: result.data.client.fullName,
-            dni: result.data.client.dni,
-            phone: result.data.client.phone,
-            email: result.data.client.email,
-            role: Role.CLIENT,
-            userId
-          },
-        })
-        clientId = newClient.id
-      }
-    }
+  //     if ( existingClient ) {
+  //       clientId = existingClient.id
+  //     } else {
+  //       const newClient = await this.prisma.client.create({
+  //         data: {
+  //           fullName: result.data.client.fullName,
+  //           dni: result.data.client.dni,
+  //           phone: result.data.client.phone,
+  //           email: result.data.client.email,
+  //           role: Role.CLIENT,
+  //           userId
+  //         },
+  //       })
+  //       clientId = newClient.id
+  //     }
+  //   }
   
-    try {
-      const orderNumber = await this.generateOrderNumber( userId )
+  //   try {
+  //     const orderNumber = await this.generateOrderNumber( userId )
       
-      await this.prisma.order.create({
-        data: {
-          userId: userId,
-          clientId: clientId,
-          floor: result.data.floor,
-          table: result.data.table,
-          orderType: result.data.orderType,
-          total: result.data.total,
-          status: OrderStatus.RECEIVED,
-          orderNumber: orderNumber,
-          orderProducts: {
-            create: result.data.order.map((product) => ({
-              productId: product.id,
-              quantity: product.quantity,
-              uniqueId: product.uniqueId,
-              variationPrice: product.variationPrice || null,
-              selectedVariants: product.selectedVariants || {},
-              selectedAdditionals: product.selectedAdditionals || {},
-              notes: product.notes || null
-            })),
-          },
-          notes: result.data.notes
-        }
-      })
+  //     await this.prisma.order.create({
+  //       data: {
+  //         userId: userId,
+  //         clientId: clientId,
+  //         floor: result.data.floor,
+  //         table: result.data.table,
+  //         orderType: result.data.orderType,
+  //         total: result.data.total,
+  //         status: OrderStatus.RECEIVED,
+  //         orderNumber: orderNumber,
+  //         orderProducts: {
+  //           create: result.data.order.map((product) => ({
+  //             productId: product.id,
+  //             quantity: product.quantity,
+  //             uniqueId: product.uniqueId,
+  //             variationPrice: product.variationPrice || null,
+  //             selectedVariants: product.selectedVariants || {},
+  //             selectedAdditionals: product.selectedAdditionals || {},
+  //             notes: product.notes || null
+  //           })),
+  //         },
+  //         notes: result.data.notes
+  //       }
+  //     })
   
-      return { success: true };
-    } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError) {
-        console.error('Prisma error:', error.message);
-      } else {
-        console.error('Unknown error occurred:', error);
+  //     return { success: true };
+  //   } catch (error) {
+  //     if (error instanceof PrismaClientKnownRequestError) {
+  //       console.error('Prisma error:', error.message);
+  //     } else {
+  //       console.error('Unknown error occurred:', error);
+  //     }
+  //     throw error;
+  //   }
+  // }
+
+  async createOrder(userId: string, data: any): Promise<any> {
+    const orderNumber = await this.generateOrderNumber(userId)
+  
+    let clientId = null;
+
+    if (data.client && (data.client.dni || data.client.fullName)) {
+      const whereCondition: any = {};
+
+      if (data.client.dni) {
+        whereCondition.dni = data.client.dni;
       }
-      throw error;
-    }
-  }
 
-  async createOrder( userId: string, data: any ): Promise<any> {
+      if (Object.keys(whereCondition).length > 0) {
+        const existingClient = await this.prisma.client.findUnique({
+          where: whereCondition,
+        });
 
-    const orderNumber = await this.generateOrderNumber( userId )
-
-    let clientId = null
-
-    if ( data.client && ( data.client.dni || data.client.fullName )) {
-      const existingClient = await this.prisma.client.findUnique({
-        where: {
-          dni: data.client.dni
+        if (existingClient) {
+          clientId = existingClient.id;
+        } else {
+          const newClient = await this.prisma.client.create({
+            data: {
+              fullName: data.client.fullName,
+              dni: data.client.dni,
+              phone: data.client.phone,
+              email: data.client.email,
+              role: Role.CLIENT,
+              user: { connect: { id: userId } },
+            },
+          });
+          clientId = newClient.id;
         }
-      })
-
-      if ( existingClient ) {
-        clientId = existingClient.id
-      } else {
-        const newClient = await this.prisma.client.create({
-          data: {
-            fullName: data.client.fullName,
-            dni: data.client.dni,
-            phone: data.client.phone,
-            email: data.client.email,
-            role: Role.CLIENT,
-            userId
-          },
-        })
-        clientId = newClient.id
       }
     }
-
+  
     const order = await this.prisma.order.create({
       data: {
         orderNumber,
         total: data.total,
-        floor: data.floor,
-        table: data.table,
+        floor: data.floor ? { connect: { id: data.floor } } : undefined,
+        table: data.table ? { connect: { id: data.table } } : undefined,
         orderType: data.orderType,
         notes: data.notes,
         status: OrderStatus.RECEIVED,
-        userId: userId,
-        clientId: clientId,
+        user: { connect: { id: userId } },
+        client: clientId ? { connect: { id: clientId } } : undefined,
         orderProducts: {
-          create: data.order.map(( item: any ) => ({
-            productId: item.id,
-            quantity: item.quantity,
-            uniqueId: item.uniqueId,
-            selectedVariants: item.selectedVariations,
-            selectedAdditionals: item.selectedAdditionals,
-            variationPrice: item.variationPrice,
-            notes: item.notes
+          create: data.order.map(( product: any ) => ({
+            productId: product.id,
+            quantity: product.quantity,
+            uniqueId: product.uniqueId,
+            selectedVariants: product.selectedVariants || {},
+            selectedAdditionals: product.selectedAdditionals || {},
+            variationPrice: product.variationPrice || null,
+            notes: product.notes || null
           }))
         }
       }
     })
-
+  
     return { success: true, order }
   }
+  
 
 
   async update( branchId: string, id: string, data: Order ): Promise<any> {

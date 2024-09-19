@@ -47,6 +47,13 @@ enum OrderType {
   DELIVERY
 }
 
+enum TableStatus {
+  AVAILABLE
+  RESERVED
+  OCCUPIED_AWAITING_ORDER
+  OCCUPIED_SERVED
+}
+
 model Restaurant {
   id String @id @default(uuid())
   name String
@@ -54,6 +61,26 @@ model Restaurant {
   owners User[] @relation("RestaurantOwners")
   branches Branch[]
   createdAt DateTime? @default(now())
+}
+
+model Floor {
+  id String @id @default(uuid())
+  name String
+  tables Table[]
+  branchId String
+  branch Branch @relation(fields: [branchId], references: [id])
+  orders Order[]
+}
+
+model Table {
+  id String @id @default(uuid())
+  number String
+  status TableStatus?
+  floorId String
+  floor Floor @relation(fields: [floorId], references: [id])
+  orders Order[]
+  userId String?
+  user User? @relation(fields: [userId], references: [id])
 }
 
 model Branch {
@@ -65,7 +92,7 @@ model Branch {
   restaurantId String
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
   users User[]
-  floors Json?
+  floors Floor[]
   createdAt DateTime? @default(now())
 }
 
@@ -87,7 +114,8 @@ model User {
   categories Category[]
   products Product[]
   clients Client[]
-  orders Order[] @relation("UserOrders")
+  tables Table[]
+  orders Order[] @relation("UserOrder")
   createdAt DateTime? @default(now())
   updatedAt DateTime? @updatedAt
   tokenVersion Int @default(0)
@@ -100,7 +128,7 @@ model Client {
   phone String?
   email String?
   role Role @default(CLIENT)
-  clientOrders Order[] @relation("ClientOrders")
+  clientOrders Order[] @relation("ClientOrder")
   createdAt DateTime? @default(now())
   userId String
   user User @relation(fields: [userId], references: [id])
@@ -165,8 +193,10 @@ model Order {
   id String @id @default(uuid())
   orderNumber String?
   total Float
-  floor String?
-  table String
+  floorId String
+  floor Floor @relation(fields: [floorId], references: [id])
+  tableId String
+  table Table @relation(fields: [tableId], references: [id])
   amount Int?
   orderType OrderType @default(DINE_IN)
   notes String?
@@ -175,9 +205,9 @@ model Order {
   orderReadyAt DateTime?
   orderProducts OrderProduct[]
   userId String
-  user User @relation("UserOrders", fields: [userId], references: [id])
+  user User @relation("UserOrder", fields: [userId], references: [id])
   clientId String?
-  client Client? @relation("ClientOrders", fields: [clientId], references: [id])
+  client Client? @relation("ClientOrder", fields: [clientId], references: [id])
   createdAt DateTime? @default(now())
 }
 

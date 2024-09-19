@@ -13,7 +13,7 @@ async function bootstrap() {
   EnvConfig.init(configService)
 
   app.enableCors({
-    origin: 'https://restify-frontend-production.up.railway.app',
+    origin: ['https://restify-frontend-production.up.railway.app', 'http://localhost:3000'],
     credentials: true
   })
   

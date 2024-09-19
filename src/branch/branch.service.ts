@@ -104,31 +104,82 @@ export class BranchService {
 
   async update(userRole: string, ownedRestaurantId: string, id: string, data: any): Promise<Branch> {
     if (userRole === Role.OWNER || userRole === Role.MANAGER) {
-      // Obtener el branch existente
       const existingBranch = await this.prisma.branch.findUnique({
         where: { id },
         include: {
           floors: {
             include: {
-              tables: true
+              tables: true,
+              orders: true, // Incluir órdenes asociadas al piso
             }
           }
         }
       });
-
+  
       if (!existingBranch) {
         throw new Error('Branch not found');
       }
-
-      // Obtener IDs actuales
+  
       const existingFloorIds = existingBranch.floors.map(floor => floor.id);
       const existingTableIds = existingBranch.floors.flatMap(floor => floor.tables.map(table => table.id));
-
-      // Obtener nuevos IDs
+  
       const newFloorIds = data.floors.map(floor => floor.id).filter(id => id);
       const newTableIds = data.floors.flatMap(floor => floor.tables.map(table => table.id)).filter(id => id);
-
-      // Eliminar tables que ya no existen
+  
+      // Eliminar OrderProduct asociados a las Orders que se eliminarán
+      const ordersToDelete = await this.prisma.order.findMany({
+        where: {
+          tableId: {
+            in: existingTableIds.filter(id => !newTableIds.includes(id))
+          }
+        }
+      });
+      const orderIdsToDelete = ordersToDelete.map(order => order.id);
+  
+      await this.prisma.orderProduct.deleteMany({
+        where: {
+          orderId: {
+            in: orderIdsToDelete
+          }
+        }
+      });
+  
+      // Eliminar Orders asociadas a los tables
+      await this.prisma.order.deleteMany({
+        where: {
+          tableId: {
+            in: existingTableIds.filter(id => !newTableIds.includes(id))
+          }
+        }
+      });
+  
+      // Eliminar Orders asociadas a los floors
+      const floorOrdersToDelete = await this.prisma.order.findMany({
+        where: {
+          floorId: {
+            in: existingFloorIds.filter(id => !newFloorIds.includes(id))
+          }
+        }
+      });
+      const floorOrderIdsToDelete = floorOrdersToDelete.map(order => order.id);
+  
+      await this.prisma.orderProduct.deleteMany({
+        where: {
+          orderId: {
+            in: floorOrderIdsToDelete
+          }
+        }
+      });
+  
+      await this.prisma.order.deleteMany({
+        where: {
+          floorId: {
+            in: existingFloorIds.filter(id => !newFloorIds.includes(id))
+          }
+        }
+      });
+  
+      // Eliminar tables y floors como se hizo antes
       await this.prisma.table.deleteMany({
         where: {
           id: {
@@ -136,8 +187,7 @@ export class BranchService {
           }
         }
       });
-
-      // Eliminar floors que ya no existen
+  
       await this.prisma.floor.deleteMany({
         where: {
           id: {
@@ -145,15 +195,14 @@ export class BranchService {
           }
         }
       });
-
-      // Actualizar el branch con los nuevos floors y tables
+  
       return this.prisma.branch.update({
         where: { id },
         data: {
           ...data,
           floors: {
             upsert: data.floors.map(floor => ({
-              where: { id: floor.id ?? '' }, // Usa el id del piso si existe
+              where: { id: floor.id ?? '' },
               create: {
                 name: floor.name,
                 tables: {
@@ -166,7 +215,7 @@ export class BranchService {
                 name: floor.name,
                 tables: {
                   upsert: floor.tables.map(table => ({
-                    where: { id: table.id ?? '' }, // Usa el id de la mesa si existe
+                    where: { id: table.id ?? '' },
                     create: {
                       number: table.number
                     },
@@ -191,10 +240,43 @@ export class BranchService {
       throwUnauthorizedException();
     }
   }
+  
 
 
   async remove(ownedRestaurantId: string, id: string): Promise<Branch> {
-    // Elimina todos los tables relacionados
+    // Obtener las órdenes asociadas a los tables y floors del branch
+    const ordersToDelete = await this.prisma.order.findMany({
+      where: {
+        table: {
+          floor: {
+            branchId: id
+          }
+        }
+      }
+    });
+    const orderIdsToDelete = ordersToDelete.map(order => order.id);
+  
+    // Eliminar OrderProduct asociados a esas órdenes
+    await this.prisma.orderProduct.deleteMany({
+      where: {
+        orderId: {
+          in: orderIdsToDelete
+        }
+      }
+    });
+  
+    // Eliminar las órdenes
+    await this.prisma.order.deleteMany({
+      where: {
+        table: {
+          floor: {
+            branchId: id
+          }
+        }
+      }
+    });
+  
+    // Eliminar tables relacionados
     await this.prisma.table.deleteMany({
       where: {
         floor: {
@@ -203,14 +285,14 @@ export class BranchService {
       }
     });
   
-    // Elimina todos los floors relacionados
+    // Eliminar floors relacionados
     await this.prisma.floor.deleteMany({
       where: {
         branchId: id
       }
     });
   
-    // Finalmente, elimina el branch
+    // Finalmente, eliminar el branch
     return this.prisma.branch.delete({
       where: {
         restaurantId: ownedRestaurantId,
@@ -218,4 +300,5 @@ export class BranchService {
       }
     });
   }
+  
 }

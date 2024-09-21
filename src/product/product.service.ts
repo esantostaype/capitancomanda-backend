@@ -48,7 +48,7 @@ export class ProductService {
           }
         ]
       })
-    } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
+    } else {
       return await this.prisma.product.findMany({
         where: {
           user: {
@@ -85,8 +85,6 @@ export class ProductService {
           }
         ]
       })
-    } else {
-      throwUnauthorizedException()
     }
   }
 
@@ -125,7 +123,7 @@ export class ProductService {
           name: 'asc',
         },
       })
-    } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
+    } else {
       return this.prisma.product.findMany({
         where: {
           category: {
@@ -157,8 +155,6 @@ export class ProductService {
           name: 'asc',
         }
       })
-    } else {
-      throwUnauthorizedException()
     }
   }
 

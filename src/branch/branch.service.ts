@@ -58,7 +58,7 @@ export class BranchService {
           }
         }
       })
-    } else if ( userRole === Role.MANAGER || userRole === Role.WAITER ) {
+    } else {
       return this.prisma.branch.findUnique({
         where: {
           id
@@ -71,8 +71,6 @@ export class BranchService {
           }
         }
       })
-    } else {
-      throwUnauthorizedException()
     }
   }
 

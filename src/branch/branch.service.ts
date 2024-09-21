@@ -86,6 +86,7 @@ export class BranchService {
             ...floor,
             tables: {
               create: floor.tables.map(table => ({
+                ...table,
                 number: table.number
               })),
             },

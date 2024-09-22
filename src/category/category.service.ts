@@ -40,7 +40,7 @@ export class CategoryService {
           orderNumber: 'asc'
         },
       });
-    } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
+    } else {
       return await this.prisma.category.findMany({
         where: {
           user: {
@@ -66,11 +66,9 @@ export class CategoryService {
           }
         },
         orderBy: {
-          createdAt: 'desc'
+          orderNumber: 'asc'
         },
       });
-    } else {
-      throwUnauthorizedException()
     }
   }
 

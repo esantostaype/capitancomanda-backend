@@ -8,136 +8,59 @@ export class CategoryService {
 
   constructor( private prisma: PrismaService ) {}
 
-  async findAll( userRole: string, branchId: string, ownedRestaurantId: string ): Promise<Category[]> {
-    if ( userRole === Role.OWNER ) {
-      return await this.prisma.category.findMany({
-        where: {
-          user: {
+  async findAll(): Promise<Category[]> {
+    return await this.prisma.category.findMany({
+      include: {
+        products: {
+          select: {
+            id: true
+          }
+        },
+        user: {
+          select: {
+            fullName: true,
             branch: {
-              restaurantId: ownedRestaurantId
-            }
+              select: {
+                name: true,
+              }
+            },
+            branchId: true
           }
-        },
-        include: {
-          products: {
-            select: {
-              id: true
-            }
-          },
-          user: {
-            select: {
-              fullName: true,
-              branch: {
-                select: {
-                  name: true,
-                }
-              },
-              branchId: true
-            }
-          }
-        },
-        orderBy: {
-          orderNumber: 'asc'
-        },
-      });
-    } else {
-      return await this.prisma.category.findMany({
-        where: {
-          user: {
-            branchId: branchId,
-          },
-        },
-        include: {
-          products: {
-            select: {
-              id: true
-            }
-          },
-          user: {
-            select: {
-              fullName: true,
-              branch: {
-                select: {
-                  name: true,
-                }
-              },
-              branchId: true
-            }
-          }
-        },
-        orderBy: {
-          orderNumber: 'asc'
-        },
-      });
-    }
+        }
+      },
+      orderBy: {
+        orderNumber: 'asc'
+      },
+    });
   }
 
-  async findOne( userRole: string, branchId: string, ownedRestaurantId: string, id: string ): Promise<Category> {
-    if ( userRole === Role.OWNER ) {
-      return await this.prisma.category.findFirst({
-        where: {
-          id,
-          user: {
+  async findOne( id: string ): Promise<Category> {
+    return await this.prisma.category.findFirst({
+      where: {
+        id
+      },
+      include: {
+        products: {
+          select: {
+            id: true
+          }
+        },
+        user: {
+          select: {
+            fullName: true,
             branch: {
-              restaurantId: ownedRestaurantId
-            }
+              select: {
+                name: true,
+              }
+            },
+            branchId: true
           }
-        },
-        include: {
-          products: {
-            select: {
-              id: true
-            }
-          },
-          user: {
-            select: {
-              fullName: true,
-              branch: {
-                select: {
-                  name: true,
-                }
-              },
-              branchId: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        },
-      });
-    } else if ( userRole === Role.ADMIN || Role.MANAGER ) {
-      return await this.prisma.category.findFirst({
-        where: {
-          id,
-          user: {
-            branchId: branchId,
-          },
-        },
-        include: {
-          products: {
-            select: {
-              id: true
-            }
-          },
-          user: {
-            select: {
-              fullName: true,
-              branch: {
-                select: {
-                  name: true,
-                }
-              },
-              branchId: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        },
-      });
-    } else {
-      throwUnauthorizedException()
-    }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+    })
   }
 
   async findByBranch( userRole: Role, branch: string ) {

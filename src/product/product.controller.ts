@@ -1,20 +1,16 @@
-import { Controller, Get, Post, Param, Delete, Body, Put, UseGuards } from '@nestjs/common'
+import { Controller, Get, Post, Param, Delete, Body, Put } from '@nestjs/common'
 import { ProductService } from './product.service'
 import { Product, Role } from '@prisma/client'
 import { UserContext } from 'src/auth/decorators/user-context.decorator'
-import { AuthGuard } from 'src/auth/guard/auth.guard'
 
 @Controller('products')
-@UseGuards( AuthGuard)
 export class ProductController {
   constructor( private readonly productService: ProductService ) {}
 
   @Get()
   async findAll(
-    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
-    const { userRole, branchId, ownedRestaurantId } = userContext
-    return this.productService.findAll( userRole, branchId, ownedRestaurantId )
+    return this.productService.findAll()
   }
 
   @Get('branch/:branchId')
@@ -28,20 +24,16 @@ export class ProductController {
 
   @Get('category/:categoryId')
   async findByCategory(
-    @Param('categoryId') categoryId: string,
-    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
+    @Param('categoryId') categoryId: string
   ) {
-    const { userRole, branchId, ownedRestaurantId } = userContext;
-    return this.productService.findByCategory( userRole, categoryId, branchId, ownedRestaurantId )
+    return this.productService.findByCategory( categoryId )
   }
 
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
-    const { userRole, branchId, ownedRestaurantId } = userContext
-    return this.productService.findOne( userRole, branchId, ownedRestaurantId, id )
+    return this.productService.findOne( id )
   }
 
   @Post()

@@ -1,31 +1,24 @@
-import { Controller, Get, Post, Param, Delete, Body, Put, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Delete, Body, Put } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { Category, Role } from '@prisma/client';
 import { UserContext } from 'src/auth/decorators/user-context.decorator';
-import { AuthGuard } from 'src/auth/guard/auth.guard';
-import { RoleGuard } from 'src/auth/guard/role.guard';
 
 @Controller('categories')
-@UseGuards( AuthGuard, RoleGuard )
 export class CategoryController {
 
   constructor( private readonly categoryService: CategoryService ) {}
 
   @Get()
   async findAll(
-    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
-    const { userRole, branchId, ownedRestaurantId } = userContext;
-    return this.categoryService.findAll( userRole, branchId, ownedRestaurantId );
+    return this.categoryService.findAll();
   }
 
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @UserContext() userContext: { userRole: Role, branchId: string, ownedRestaurantId: string }
   ) {
-    const { userRole, branchId, ownedRestaurantId } = userContext
-    return this.categoryService.findOne( userRole, branchId, ownedRestaurantId, id );
+    return this.categoryService.findOne( id );
   }
 
   @Post()
